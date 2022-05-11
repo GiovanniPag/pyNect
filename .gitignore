@@ -2,3 +2,4 @@
 /var/.logs/*
 /projects/*
 /examples/
+/var/.conf/pynect.ini
