@@ -1,7 +1,3 @@
 # Default ignored files
 /shelf/
 /workspace.xml
-/examples/
-/projects/*
-var/.logs/*
-var/guide.pdf
