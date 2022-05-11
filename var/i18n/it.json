@@ -1,0 +1,209 @@
+{
+  "title": "PyNect - kinect per il 3D",
+  "menu": {
+    "menu_file": {
+      "label": "File",
+      "underline": 0,
+      "new_project": {
+        "label": "Nuovo Progetto",
+        "default_state": "normal",
+        "underline": 0
+      },
+      "open_project": {
+        "label": "Apri...",
+        "default_state": "normal",
+        "underline": 0
+      },
+      "settings": {
+        "label": "Impostazioni",
+        "default_state": "normal",
+        "underline": 0
+      },
+      "exit": {
+        "label": "Chiudi",
+        "default_state": "normal",
+        "underline": 0
+      }
+    },
+    "menu_edit": {
+      "label": "Modifica",
+      "underline": 0,
+      "undo": {
+        "label": "Annulla",
+        "default_state": "disabled",
+        "underline": 0,
+        "accelerator": "Control+Z"
+      },
+      "redo": {
+        "label": "Ripristina",
+        "default_state": "disabled",
+        "underline": 0,
+        "accelerator": "Control+Shift+Z"
+      },
+      "cut": {
+        "label": "Taglia",
+        "default_state": "normal",
+        "underline": 2,
+        "accelerator": "Control+X"
+      },
+      "copy": {
+        "label": "Copia",
+        "default_state": "normal",
+        "underline": 0,
+        "accelerator": "Control+C"
+      },
+      "paste": {
+        "label": "Incolla",
+        "default_state": "normal",
+        "underline": 0,
+        "accelerator": "Control+V"
+      },
+      "delete": {
+        "label": "Elimina",
+        "default_state": "normal",
+        "underline": 0
+      }
+    },
+    "menu_sensor": {
+      "label": "Sensore",
+      "underline": 0,
+      "fps": {
+        "label": "Frequenza di aggiornamento",
+        "default_state": "normal",
+        "underline": 0,
+        "10fps": {
+          "label": "10 fps"
+        },
+        "15fps": {
+          "label": "15 fps"
+        },
+        "30fps": {
+          "label": "30 fps"
+        },
+        "60fps": {
+          "label": "60 fps"
+        }
+      }
+    },
+    "menu_help": {
+      "label": "Aiuto",
+      "underline": 0,
+      "language": {
+        "label": "Lingua",
+        "default_state": "normal",
+        "underline": 0,
+        "it": {
+          "label": "Italiano"
+        },
+        "en": {
+          "label": "Inglese"
+        }
+      },
+      "about": {
+        "label": "Informazioni",
+        "default_state": "normal",
+        "underline": 0
+      },
+      "logs": {
+        "label": "Mostra Cartella dei Log",
+        "default_state": "normal",
+        "underline": 0
+      },
+      "guide": {
+        "label": "Guida",
+        "default_state": "normal",
+        "underline": 0
+      }
+    }
+  },
+  "dialog": {
+    "project_message": {
+      "project_exist": {
+        "message": "Errore nel nome del progetto",
+        "title": "Pynect - Errore progetto",
+        "detail": "Nella cartella selezionata esiste già un progetto, o una cartella, con questo nome."
+      },
+      "about": {
+        "message": "PyNect 2022",
+        "title": "Informazioni su Pynect",
+        "detail": "Un progetto per Computer Graphics and 3D"
+      },
+      "project_already_open": {
+        "message": "Errore di selezione del progetto",
+        "title": "Pynect - Errore progetto",
+        "detail": "Il progetto selezionato è già presente tra i progetti aperti."
+      },
+      "project_open_success": {
+        "message": "Progetto aperto",
+        "title": "Pynect - progetto",
+        "detail": "Il progetto è stato aperto con successo."
+      },
+      "not_project": {
+        "message": "Errore di selezione del progetto",
+        "title": "Pynect - Errore progetto",
+        "detail": "La cartella selezionata non rappresenta un progetto leggibile."
+      },
+      "no_device": {
+        "message": "Errore di apertura sensore",
+        "title": "Pynect - Errore sensore",
+        "detail": "Non è stato rilevato alcun sensore collegato."
+      }
+    },
+    "p_options": {
+      "title": "Pynect - Opzioni Progetto",
+      "name": "Nome progetto:",
+      "name_tip": "Il nome del progetto non deve essere più lungo di 50 caratteri e non deve contenere spazi, caratteri o simboli speciali (- e _ sono concessi)."
+    },
+    "choose_folder": {
+      "title": "Seleziona la cartella in cui creare la cartella base del progetto"
+    },
+    "buttons": {
+      "ok": "Ok",
+      "back": "Indietro",
+      "confirm": "Conferma",
+      "cancel": "Annulla"
+    }
+  },
+  "tree_view": {
+    "columns": {
+      "name": "Nome",
+      "size": "Dimensione",
+      "modified": "Ultima modifica"
+    }
+  },
+  "device_view": {
+    "frames": {
+      "rgb": "RGB",
+      "ir": "Infrarossi",
+      "depth": "Profondità"
+    }
+  },
+  "selected_file": {
+    "path": "Percorso",
+    "no_file": "Nessun file selezionato"
+  },
+  "selected_project": {
+    "name": "Nome",
+    "path": "Percorso",
+    "scan": "Scansione",
+    "reg": "Registrazione",
+    "final": "File Finale",
+    "done": "Fatto",
+    "not_done":"Non Fatto",
+    "no_project": "Nessun progetto selezionato"
+  },
+  "project_actions": {
+    "scan": {
+      "name": "Scansione",
+      "exist": "Il progetto possiede già una scansione:",
+      "merge": "Unisci",
+      "override": "Sovrascrivi"
+    },
+    "registration": {
+      "name": "Registrazione"
+    },
+    "final": {
+      "name": "Finale"
+    }
+  }
+}

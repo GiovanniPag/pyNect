@@ -1,0 +1,209 @@
+{
+  "title": "PyNect - kinect for 3D",
+  "menu": {
+    "menu_file": {
+      "label": "File",
+      "underline": 0,
+      "new_project": {
+        "label": "New Project",
+        "default_state": "normal",
+        "underline": 0
+      },
+      "open_project": {
+        "label": "Open...",
+        "default_state": "normal",
+        "underline": 0
+      },
+      "settings": {
+        "label": "Settings",
+        "default_state": "normal",
+        "underline": 0
+      },
+      "exit": {
+        "label": "Exit",
+        "default_state": "normal",
+        "underline": 0
+      }
+    },
+    "menu_edit": {
+      "label": "Edit",
+      "underline": 0,
+      "undo": {
+        "label": "Undo",
+        "default_state": "disabled",
+        "underline": 0,
+        "accelerator": "Control+Z"
+      },
+      "redo": {
+        "label": "Redo",
+        "default_state": "disabled",
+        "underline": 0,
+        "accelerator": "Control+Shift+Z"
+      },
+      "cut": {
+        "label": "Cut",
+        "default_state": "normal",
+        "underline": 2,
+        "accelerator": "Control+X"
+      },
+      "copy": {
+        "label": "Copy",
+        "default_state": "normal",
+        "underline": 0,
+        "accelerator": "Control+C"
+      },
+      "paste": {
+        "label": "Paste",
+        "default_state": "normal",
+        "underline": 0,
+        "accelerator": "Control+V"
+      },
+      "delete": {
+        "label": "Delete",
+        "default_state": "normal",
+        "underline": 0
+      }
+    },
+    "menu_sensor": {
+      "label": "Sensor",
+      "underline": 0,
+      "fps": {
+        "label": "Refresh rate",
+        "default_state": "normal",
+        "underline": 0,
+        "10fps": {
+          "label": "10 fps"
+        },
+        "15fps": {
+          "label": "15 fps"
+        },
+        "30fps": {
+          "label": "30 fps"
+        },
+        "60fps": {
+          "label": "60 fps"
+        }
+      }
+    },
+    "menu_help": {
+      "label": "Help",
+      "underline": 0,
+      "language": {
+        "label": "Language",
+        "default_state": "normal",
+        "underline": 0,
+        "it": {
+          "label": "Italian"
+        },
+        "en": {
+          "label": "English"
+        }
+      },
+      "about": {
+        "label": "About",
+        "default_state": "normal",
+        "underline": 0
+      },
+      "logs": {
+        "label": "Show Logs Folder",
+        "default_state": "normal",
+        "underline": 0
+      },
+      "guide": {
+        "label": "Guide",
+        "default_state": "normal",
+        "underline": 0
+      }
+    }
+  },
+  "dialog": {
+    "project_message": {
+      "project_exist": {
+        "message": "Project name error",
+        "title": "Pynect - Project error",
+        "detail": "A project, or a folder, with this name already exists in the selected folder."
+      },
+      "about": {
+        "message": "PyNect 2022",
+        "title": "About Pynect",
+        "detail": "A project for Computer Graphics and 3D"
+      },
+      "project_already_open": {
+        "message": "Project selection error",
+        "title": "Pynect - Project error",
+        "detail": "The selected project is already open."
+      },
+      "project_open_success": {
+        "message": "Project opened",
+        "title": "Pynect - Project",
+        "detail": "The project has been successfully opened."
+      },
+      "not_project": {
+        "message": "Project selection error",
+        "title": "Pynect - Project error",
+        "detail": "The selected folder isn't a readable project."
+      },
+      "no_device": {
+        "message": "Sensor opening error",
+        "title": "Pynect - Sensor Error",
+        "detail": "No connected sensor was detected."
+      }
+    },
+    "p_options": {
+      "title": "Pynect - Project Options",
+      "name": "Project Name:",
+      "name_tip": "The project name must be no longer than 50 characters and must contain no spaces, special characters or symbols (- and _ are allowed)."
+    },
+    "choose_folder": {
+      "title": "choose the folder in which you want to create the project directory"
+    },
+    "buttons": {
+      "ok": "Ok",
+      "back": "Back",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    }
+  },
+  "tree_view": {
+    "columns": {
+      "name": "Name",
+      "size": "Size",
+      "modified": "Modified"
+    }
+  },
+  "device_view": {
+    "frames": {
+      "rgb": "RGB",
+      "ir": "Infrared",
+      "depth": "Depth"
+    }
+  },
+  "selected_file": {
+    "path": "Path",
+    "no_file": "No file selected"
+  },
+  "selected_project": {
+    "name": "Name",
+    "path": "Path",
+    "scan": "Scansion",
+    "reg": "Registration",
+    "final": "Final file",
+    "done": "Done",
+    "not_done":"Not done",
+    "no_project": "No project selected"
+  },
+  "project_actions": {
+    "scan": {
+      "name": "Scan",
+      "exist": "The project already has a scan:",
+      "merge": "Merge",
+      "override": "Override"
+    },
+    "registration": {
+      "name": "Registration"
+    },
+    "final": {
+      "name": "Final"
+    }
+  }
+}
