@@ -666,11 +666,7 @@ class ProjectInfoView(View):
 
     def __step_done_set_label(self, label, info_to_check):
         logger.debug(f"set {label} of {info_to_check} as done or not")
-        logger.warning(f"{self._project_info} {info_to_check} {self._project_info.get(info_to_check)}")
-        # logger.warning(f"{self._project_info['scan']}")
-        for k in self._project_info:
-            logger.warning(f"{k}")
-        if self._project_info.getboolean(info_to_check, P_DONE):
+        if self._project_info.getboolean(info_to_check, P_DONE, False):
             label.set(i18n.selected_project_view[PV_DONE])
         else:
             label.set(i18n.selected_project_view[PV_NOT_DONE])
@@ -697,9 +693,11 @@ class ScanView(View):
         self.update_language()
 
     def update_language(self):
+        logger.debug("update language in scan view")
         self._exist_label_info.set(i18n.project_actions_scan[PAS_EXIST])
 
     def create_view(self):
+        logger.debug("create view in scan view")
         self._exist_label = ttk.Label(self, textvariable=self._exist_label_info)
 
     def _has_scan(self):
@@ -707,12 +705,14 @@ class ScanView(View):
         return self._project_info.getboolean(P_SCAN, P_DONE)
 
     def __update_view(self):
+        logger.debug("update view in scan view")
         if self._has_scan():
             self._exist_label.grid(column=0, row=0, sticky=(tk.W, tk.E))
         else:
             self._exist_label.grid_forget()
 
     def update_selected_project(self, data=None):
+        logger.debug("update selected project in scan view")
         self._project_info = data
         self.__update_view()
 
@@ -725,12 +725,13 @@ class FinalView(View):
         self.update_language()
 
     def create_view(self):
-        pass
+        logger.debug("update view in Final view")
 
     def update_language(self):
-        pass
+        logger.debug("update language in Final view")
 
     def update_selected_project(self, data=None):
+        logger.debug("update selected project in Final view")
         self._project_info = data
 
 
@@ -744,12 +745,13 @@ class RegistrationView(View):
         self.update_language()
 
     def create_view(self):
-        pass
+        logger.debug("update view in Registration view")
 
     def update_language(self):
-        pass
+        logger.debug("update language in Registration view")
 
     def update_selected_project(self, data=None):
+        logger.debug("update selected project in Registration view")
         self._project_info = data
 
 

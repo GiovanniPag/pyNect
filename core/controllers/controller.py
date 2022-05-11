@@ -202,10 +202,11 @@ class TreeController(Controller):
         self.__tree_nodes = {}
 
     def get_last_selected_project(self):
-
+        logger.debug(f"return last selected project path")
         return self.__last_selected_project[P_PATH]
 
     def get_last_selected_file(self):
+        logger.debug(f"return last selected file path")
         return self.__last_selected_file[P_PATH]
 
     def bind(self, v: ProjectTreeView):
@@ -331,10 +332,12 @@ class SelectedFileController(Controller):
         self.master = master
 
     def bind(self, v: SelectedFileView):
+        logger.debug(f"bind in Selected file controller")
         self.view = v
         self.view.create_view()
 
     def update_view(self, data: Path):
+        logger.debug(f"update view in Selected file controller")
         self.view.update_selected_file(data)
 
 
@@ -345,10 +348,13 @@ class SelectedProjectController(Controller):
         self.master = master
 
     def bind(self, v: ProjectInfoView):
+
+        logger.debug(f"bind in Selected project controller")
         self.view = v
         self.view.create_view()
 
     def update_view(self, data):
+        logger.debug(f"update view in Selected project controller")
         self.view.update_selected_project(data)
 
 
@@ -359,10 +365,12 @@ class ScanController(Controller):
         self.master = master
 
     def bind(self, v: ScanView):
+        logger.debug(f"bind in Scan controller")
         self.view = v
         self.view.create_view()
 
     def update_selected(self, data):
+        logger.debug(f"update selected in Scan controller")
         self.view.update_selected_project(data)
 
 
@@ -373,10 +381,12 @@ class FinalController(Controller):
         self.master = master
 
     def bind(self, v: FinalView):
+        logger.debug(f"bind in Final controller")
         self.view = v
         self.view.create_view()
 
     def update_selected(self, data):
+        logger.debug(f"update selected in Final controller")
         self.view.update_selected_project(data)
 
 
@@ -387,10 +397,12 @@ class RegistrationController(Controller):
         self.master = master
 
     def bind(self, v: RegistrationView):
+        logger.debug(f"bind in Registration controller")
         self.view = v
         self.view.create_view()
 
     def update_selected(self, data):
+        logger.debug(f"update selected in Registration controller")
         self.view.update_selected_project(data)
 
 
@@ -404,6 +416,7 @@ class ProjectActionController(Controller):
         self._final_controller = FinalController(master)
 
     def bind(self, v: ProjectActionView):
+        logger.debug(f"bind in project action controller")
         self.view = v
         self.view.create_view()
         self.view.bind_controllers(scan_controller=self._scan_controller,
@@ -411,6 +424,7 @@ class ProjectActionController(Controller):
                                    final_controller=self._final_controller)
 
     def select_project(self, data):
+        logger.debug(f"update selected project in project action controller")
         self.view.update_selected_project(data)
         self._scan_controller.update_selected(data)
         self._registration_controller.update_selected(data)
