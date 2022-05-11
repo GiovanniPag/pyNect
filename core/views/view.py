@@ -622,6 +622,7 @@ class ProjectInfoView(View):
         super().__init__(master)
         self.master = master
         self._project_info: Optional[ConfigParser] = None
+        self._project_name = None
         self._name_label_info = tk.StringVar()
         self._path_label_info = tk.StringVar()
         self._name_label = tk.StringVar()
@@ -666,17 +667,18 @@ class ProjectInfoView(View):
 
     def __step_done_set_label(self, label, info_to_check):
         logger.debug(f"set {label} of {info_to_check} as done or not")
-        if self._project_info.getboolean(info_to_check, P_DONE, False):
+        if self._project_info.getboolean(info_to_check, P_DONE):
             label.set(i18n.selected_project_view[PV_DONE])
         else:
             label.set(i18n.selected_project_view[PV_NOT_DONE])
 
-    def update_selected_project(self, data):
+    def update_selected_project(self, data: ConfigParser):
         logger.debug("update selected project in project info view")
         self._project_info = data
+        self._project_name = str(self._project_info.sections()[0])
         if data:
-            self._path_label.set(str(self._project_info[P_PATH]))
-            self._name_label.set(self._project_info[P_NAME])
+            self._path_label.set(str(self._project_info[self._project_name][P_PATH]))
+            self._name_label.set(self._project_info[self._project_name][P_NAME])
             self.__step_done_set_label(self._scan_label, P_SCAN)
             self.__step_done_set_label(self._reg_label, P_REG)
             self.__step_done_set_label(self._final_label, P_FINAL)

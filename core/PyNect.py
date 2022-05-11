@@ -85,15 +85,15 @@ class PyNect(tk.Tk):
                 is_project, metadata = check_if_is_project(path, open_projects[option])
                 if is_project:
                     logger.debug("project: " + option + " exists, add it to open projects")
-                    self.add_project(metadata[open_projects[option]])
+                    self.add_project(metadata, open_projects[option])
                 else:
                     purge = True
             if purge:  # purge not found
                 purge_option_config(option)
 
-    def add_project(self, project_data):
-        logger.debug(f"add {project_data} from {project_data[P_PATH]} to open projects")
-        self.open_projects[project_data[P_PATH]] = project_data
+    def add_project(self, project_data, project_name):
+        logger.debug(f"add {project_data} from {project_data[project_name][P_PATH]} to open projects")
+        self.open_projects[project_data[project_name][P_PATH]] = project_data
 
     # create all view classes
     def __create_gui(self):

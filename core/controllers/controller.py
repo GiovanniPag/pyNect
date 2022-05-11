@@ -64,7 +64,7 @@ class MenuController(Controller):
                         open_message_dialog(self.master, "project_already_open", ERROR_ICON)
                     else:
                         logger.debug("project opened successfully")
-                        self.master.add_project(metadata[path.name])
+                        self.master.add_project(metadata, path.name)
                         add_to_open_projects(path)
                         open_message_dialog(self.master, "project_open_success")
                         logger.debug("menu_bar <<UpdateTree>> event generation")
@@ -287,8 +287,7 @@ class TreeController(Controller):
         for project in data:
             logger.debug(
                 f"Tree_view controller populate root nodes: for each project add to tree_nodes and view : {project}")
-            project_data = data[project]
-            p_path = Path(project_data[P_PATH])
+            p_path = Path(project)
             self.add_or_update_node(path=p_path)
             self.add_or_update_tree_view_node(self.__tree_nodes[p_path])
 
@@ -348,7 +347,6 @@ class SelectedProjectController(Controller):
         self.master = master
 
     def bind(self, v: ProjectInfoView):
-
         logger.debug(f"bind in Selected project controller")
         self.view = v
         self.view.create_view()
