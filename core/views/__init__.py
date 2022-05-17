@@ -1,7 +1,10 @@
+import platform
 import re
 import tkinter as tk
 import tkinter.ttk as ttk
 from abc import abstractmethod
+from enum import Enum, auto
+from math import floor
 
 from core import logger
 
@@ -30,33 +33,137 @@ def sizeof_fmt(num, suffix="B"):
     return f"{num:.1f} Yi{suffix}"
 
 
+class GeometryManager(Enum):
+    GRID = auto()
+    PACK = auto()
+
+
 class AutoScrollbar(ttk.Scrollbar):
-    def __init__(self, master, column_grid, row_grid, **kwargs):
+    def __init__(self, master, geometry: GeometryManager = GeometryManager.GRID, column_grid=1, row_grid=0,
+                 **kwargs):
         super().__init__(master, **kwargs)
+        self.geometry = geometry
         self.column = column_grid
         self.row = row_grid
 
     """Create a scrollbar that hides itself if it's not needed."""
+
     def set(self, lo, hi):
         logger.debug(f"hide scrollbar if not needed")
         if float(lo) <= 0.0 and float(hi) >= 1.0:
-            self.grid_forget()
+            if self.geometry is GeometryManager.GRID:
+                self.grid_forget()
+            else:
+                self.pack_forget()
         else:
             if self.cget("orient") == tk.HORIZONTAL:
-                self.grid(column=self.column, row=self.row, sticky=(tk.W, tk.E))
+                if self.geometry is GeometryManager.GRID:
+                    self.grid(column=self.column, row=self.row, sticky=(tk.W, tk.E))
+                else:
+                    self.pack(fill=tk.X, side=tk.BOTTOM)
             else:
-                self.grid(column=self.column, row=self.row, sticky=(tk.N, tk.S))
+                if self.geometry is GeometryManager.GRID:
+                    self.grid(column=self.column, row=self.row, sticky=(tk.N, tk.S))
+                else:
+                    self.pack(fill=tk.Y, side=tk.RIGHT)
         tk.Scrollbar.set(self, lo, hi)
+
+    def place(self, **kw):
+        raise tk.TclError("cannot use place with this widget")
+
+
+class DiscreteStep(tk.Scale):
+    def __init__(self, master=None, step=1, **kw):
+        super().__init__(master, **kw)
+        self.step = floor(step)
+        self.variable: tk.IntVar = kw.get("variable")
+        self.value_list = list(range(int(kw.get("from_")), int(kw.get("to")+1), self.step))
+        self.configure(command=self.value_check)
+
+    def value_check(self, value):
+        new_value = min(self.value_list, key=lambda x: abs(x - float(value)))
+        self.variable.set(value=new_value)
+
+
+class AutoWrapMessage(tk.Message):
+    def __init__(self, master, margin=8, **kwargs):
+        super().__init__(master, **kwargs)
+        self.margin = margin
+        self.bind("<Configure>", lambda event: event.widget.configure(width=event.width - 8))
+
+
+class ScrollFrame(tk.Frame):
+    def __init__(self, master):
+        super().__init__(master)
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.canvas = tk.Canvas(self, borderwidth=0)
+        self.viewPort = tk.Frame(self.canvas, background="#bbaaee")
+        self.vsb = AutoScrollbar(self, geometry=GeometryManager.GRID, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.vsb.set)
+        self.canvas.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
+        self.canvas_window = self.canvas.create_window((0, 0), window=self.viewPort, anchor="nw", tags="self.viewPort")
+
+        self.viewPort.bind("<Configure>", self.on_frame_configure)
+        # bind an event whenever the size of the viewPort frame changes.
+        self.canvas.bind("<Configure>", self.on_canvas_configure)
+        # bind an event whenever the size of the canvas frame changes.
+        self.viewPort.bind('<Enter>', self.on_enter)
+        # bind wheel events when the cursor enters the control
+        self.viewPort.bind('<Leave>', self.on_leave)
+        # unbind wheel events when the cursor leaves the control
+        self.on_frame_configure(None)
+        # perform an initial stretch on render, otherwise the scroll region has a tiny border until the first resize
+
+    def on_frame_configure(self, _):
+        """ Reset the scroll region to encompass the inner frame """
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        # whenever the size of the frame changes, alter the scroll region respectively.
+
+    def on_canvas_configure(self, event):
+        """ Reset the canvas window to encompass inner frame when required """
+        canvas_width = event.width
+        self.canvas.itemconfig(self.canvas_window, width=canvas_width)
+        # whenever the size of the canvas changes alter the window region respectively.
+
+    def on_mouse_wheel(self, event):  # cross platform scroll wheel event
+        if platform.system() == 'Windows':
+            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        elif platform.system() == 'Darwin':
+            self.canvas.yview_scroll(int(-1 * event.delta), "units")
+        else:
+            if event.num == 4:
+                self.canvas.yview_scroll(-1, "units")
+            elif event.num == 5:
+                self.canvas.yview_scroll(1, "units")
+
+    def on_enter(self, event):
+        # bind wheel events when the cursor enters the control
+        if self.vsb.winfo_ismapped():
+            if platform.system() == 'Linux':
+                self.canvas.bind_all("<Button-4>", self.on_mouse_wheel)
+                self.canvas.bind_all("<Button-5>", self.on_mouse_wheel)
+            else:
+                self.canvas.bind_all("<MouseWheel>", self.on_mouse_wheel)
+
+    def on_leave(self, event):
+        # unbind wheel events when the cursor leaves the control
+        if platform.system() == 'Linux':
+            self.canvas.unbind_all("<Button-4>")
+            self.canvas.unbind_all("<Button-5>")
+        else:
+            self.canvas.unbind_all("<MouseWheel>")
 
 
 class ToolTip:
     """
     create a tooltip for a given widget
     """
+
     def __init__(self, widget, bg='#FFFFEA', pad=(5, 3, 5, 3), text='widget info',
                  wait_time=400, wrap_length=250):
-        self.wait_time = wait_time     # milliseconds
-        self.wrap_length = wrap_length   # pixels
+        self.wait_time = wait_time  # milliseconds
+        self.wrap_length = wrap_length  # pixels
         self.widget = widget
         self.text = text
         self.widget.bind("<Enter>", self.on_enter)

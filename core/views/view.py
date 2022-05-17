@@ -15,7 +15,7 @@ from core.util import config
 from core.util.config import logger, nect_config
 from core.util.constants import *
 from core.util.language_resource import i18n
-from core.views import View, AutoScrollbar
+from core.views import View, AutoScrollbar, AutoWrapMessage, ScrollFrame, DiscreteStep
 
 logger.debug("import pipeline module")
 try:
@@ -32,7 +32,6 @@ logger.info(f"Packet pipeline: {type(pipeline).__name__}")
 
 
 class ScrollWrapperView(View):
-
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
@@ -667,7 +666,7 @@ class ProjectInfoView(View):
 
     def __step_done_set_label(self, label, info_to_check):
         logger.debug(f"set {label} of {info_to_check} as done or not")
-        if self._project_info.getboolean(info_to_check, P_DONE):
+        if self._project_info.getboolean(info_to_check, P_DONE, fallback=False):
             label.set(i18n.selected_project_view[PV_DONE])
         else:
             label.set(i18n.selected_project_view[PV_NOT_DONE])
@@ -689,18 +688,130 @@ class ScanView(View):
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
+        self.scrollFrame = ScrollFrame(self)  # add a new scrollable frame.
+
         self._project_info: Optional[ConfigParser] = None
-        self._exist_label_info = tk.StringVar()
-        self._exist_label: Optional[ttk.Label] = None
+        self._exist_message_info = tk.StringVar()
+        self._merge_scan_info = tk.StringVar()
+        self._override_scan_info = tk.StringVar()
+        self._exist_response = tk.StringVar()
+        self._rot_label_info = tk.StringVar()
+        self._rot_cam_info = tk.StringVar()
+        self._rot_obj_info = tk.StringVar()
+        self._rot_response = tk.StringVar()
+        self._face_info = tk.StringVar()
+        self._face_crop_info = tk.StringVar()
+        self._face_detect_info = tk.StringVar()
+        self._face_response = tk.StringVar()
+        self._capture_info = tk.StringVar()
+        self._capture_depth_info = tk.StringVar()
+        self._capture_both_info = tk.StringVar()
+        self._capture_response = tk.StringVar()
+        self._fps_info = tk.StringVar()
+        self._time_info = tk.StringVar()
+        self._time_sec_info = tk.StringVar()
+        self._time_man_info = tk.StringVar()
+        self._sec_info = tk.StringVar()
+        self._sec_response = tk.StringVar()
+        self._time_response = tk.StringVar()
+        self._time_sec_start = tk.StringVar()
+        self._time_sec_stop = tk.StringVar()
+        self._time_man_start = tk.StringVar()
+        self._time_man_stop = tk.StringVar()
+        self._fps_int = tk.IntVar()
+
+        self._exist_message: Optional[tk.Message] = None
+        self._merge_scan: Optional[ttk.Radiobutton] = None
+        self._override_scan: Optional[ttk.Radiobutton] = None
+        self._rot_message: Optional[tk.Message] = None
+        self._rot_obj: Optional[ttk.Radiobutton] = None
+        self._rot_cam: Optional[ttk.Radiobutton] = None
+        self._face_message: Optional[tk.Message] = None
+        self._face_detect: Optional[ttk.Radiobutton] = None
+        self._face_crop: Optional[ttk.Radiobutton] = None
+        self._capture_message: Optional[tk.Message] = None
+        self._capture_depth: Optional[ttk.Radiobutton] = None
+        self._capture_both: Optional[ttk.Radiobutton] = None
+        self._time_message: Optional[tk.Message] = None
+        self._time_sec: Optional[ttk.Radiobutton] = None
+        self._time_man: Optional[ttk.Radiobutton] = None
+        self._fps_message: Optional[tk.Message] = None
+        self._sec_message: Optional[tk.Message] = None
+        self._sec_start: Optional[ttk.Button] = None
+        self._sec_stop: Optional[ttk.Button] = None
+        self._man_start: Optional[ttk.Button] = None
+        self._man_stop: Optional[ttk.Button] = None
+        self._fps_scale: Optional[ttk.Scale] = None
+        self._sec_entry: Optional[ttk.Entry] = None
+        self._sec_progress: Optional[ttk.Progressbar] = None
         self.update_language()
 
     def update_language(self):
         logger.debug("update language in scan view")
-        self._exist_label_info.set(i18n.project_actions_scan[PAS_EXIST])
+        self._exist_message_info.set(i18n.project_actions_scan[PAS_EXIST])
+        self._merge_scan_info.set(i18n.project_actions_scan[PAS_MERGE])
+        self._override_scan_info.set(i18n.project_actions_scan[PAS_OVERRIDE])
+        self._rot_label_info.set(i18n.project_actions_scan[PAS_ROT])
+        self._rot_cam_info.set(i18n.project_actions_scan[PAS_ROT_CAM])
+        self._rot_obj_info.set(i18n.project_actions_scan[PAS_ROT_OBJ])
+        self._face_detect_info.set(i18n.project_actions_scan[PAS_FACE_DETECT])
+        self._face_crop_info.set(i18n.project_actions_scan[PAS_FACE_CROP])
+        self._face_info.set(i18n.project_actions_scan[PAS_FACE])
+        self._capture_info.set(i18n.project_actions_scan[PAS_DATA])
+        self._capture_depth_info.set(i18n.project_actions_scan[PAS_DEPTH])
+        self._capture_both_info.set(i18n.project_actions_scan[PAS_BOTH])
+        self._fps_info.set(i18n.project_actions_scan[PAS_FPS])
+        self._time_info.set(i18n.project_actions_scan[PAS_TIME])
+        self._time_sec_info.set(i18n.project_actions_scan[PAS_SEC])
+        self._sec_info.set(i18n.project_actions_scan[PAS_SEC_INFO])
+        self._time_man_info.set(i18n.project_actions_scan[PAS_MANUAL])
+        self._time_sec_start.set(i18n.project_actions_scan[PAS_START])
+        self._time_sec_stop.set(i18n.project_actions_scan[PAS_STOP])
+        self._time_man_start.set(i18n.project_actions_scan[PAS_START])
+        self._time_man_stop.set(i18n.project_actions_scan[PAS_STOP])
 
     def create_view(self):
         logger.debug("create view in scan view")
-        self._exist_label = ttk.Label(self, textvariable=self._exist_label_info)
+        self._exist_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._exist_message_info)
+        self._override_scan = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._override_scan_info,
+                                              variable=self._exist_response, value=PAS_OVERRIDE)
+        self._merge_scan = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._merge_scan_info,
+                                           variable=self._exist_response,
+                                           value=PAS_MERGE)
+        self._rot_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._rot_label_info)
+        self._rot_obj = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._rot_obj_info,
+                                        variable=self._rot_response, value=PAS_ROT_OBJ)
+        self._rot_cam = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._rot_cam_info,
+                                        variable=self._rot_response,
+                                        value=PAS_ROT_CAM)
+        self._face_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._face_info)
+        self._face_crop = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._face_crop_info,
+                                          variable=self._face_response, value=PAS_FACE_CROP)
+        self._face_detect = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._face_detect_info,
+                                            variable=self._face_response,
+                                            value=PAS_FACE_DETECT)
+
+        self._capture_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._capture_info)
+        self._capture_depth = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._capture_depth_info,
+                                              variable=self._capture_response, value=PAS_DEPTH)
+        self._capture_both = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._capture_both_info,
+                                             variable=self._capture_response, value=PAS_BOTH)
+        self._time_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._time_info)
+        self._time_sec = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._time_sec_info,
+                                         variable=self._time_response, value=PAS_SEC)
+        self._time_man = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._time_man_info,
+                                         variable=self._time_response, value=PAS_MANUAL)
+        self._fps_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._fps_info)
+        self._sec_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._sec_info)
+        self._sec_start = ttk.Button(self.scrollFrame.viewPort, textvariable=self._time_sec_start, command=...)
+        self._sec_stop = ttk.Button(self.scrollFrame.viewPort, textvariable=self._time_sec_stop, command=...)
+        self._man_start = ttk.Button(self.scrollFrame.viewPort, textvariable=self._time_man_start, command=...)
+        self._man_stop = ttk.Button(self.scrollFrame.viewPort, textvariable=self._time_man_stop, command=...)
+        self._fps_scale = DiscreteStep(self.scrollFrame.viewPort, orient=tk.HORIZONTAL, showvalue=1, step=1, length=200, from_=1.0,
+                                       to=30.0, variable=self._fps_int)
+        self._sec_entry = ttk.Entry(self.scrollFrame.viewPort, textvariable=self._sec_response)
+        self._sec_progress = ttk.Progressbar(self.scrollFrame.viewPort, orient=tk.HORIZONTAL, length=200,
+                                             mode='determinate')
 
     def _has_scan(self):
         logger.debug("check if scan has been done")
@@ -708,12 +819,44 @@ class ScanView(View):
 
     def __update_view(self):
         logger.debug("update view in scan view")
-        if self._has_scan():
-            self._exist_label.grid(column=0, row=0, sticky=(tk.W, tk.E))
+        if self._project_info:
+            if self._has_scan():
+                self._exist_message.grid(column=0, row=0, columnspan=5, sticky=(tk.W, tk.E))
+                self._merge_scan.grid(column=1, row=1, sticky=(tk.W, tk.E))
+                self._override_scan.grid(column=3, row=1, sticky=(tk.W, tk.E))
+                self._exist_response.set(PAS_MERGE)
+            else:
+                self._exist_message.grid_forget()
+                self._merge_scan.grid_forget()
+                self._override_scan.grid_forget()
+            self._rot_message.grid(column=0, row=2, columnspan=5, sticky=(tk.W, tk.E))
+            self._rot_obj.grid(column=1, row=3, sticky=(tk.W, tk.E))
+            self._rot_cam.grid(column=3, row=3, sticky=(tk.W, tk.E))
+            self._rot_response.set(self._project_info.get(P_SCAN, P_SCAN_ROT, fallback=None))
+            self._face_message.grid(column=0, row=4, columnspan=5, sticky=(tk.W, tk.E))
+            self._face_crop.grid(column=1, row=5, sticky=(tk.W, tk.E))
+            self._face_detect.grid(column=3, row=5, sticky=(tk.W, tk.E))
+            self._capture_message.grid(column=0, row=6, columnspan=5, sticky=(tk.W, tk.E))
+            self._capture_both.grid(column=1, row=7, sticky=(tk.W, tk.E))
+            self._capture_depth.grid(column=3, row=7, sticky=(tk.W, tk.E))
+            self._fps_message.grid(column=0, row=8, columnspan=5, sticky=(tk.W, tk.E))
+            self._fps_scale.grid(column=0, row=9, columnspan=5, sticky=(tk.W, tk.E))
+            self._time_message.grid(column=0, row=10, columnspan=5, sticky=(tk.W, tk.E))
+            self._time_sec.grid(column=1, row=11, sticky=(tk.W, tk.E))
+            self._time_man.grid(column=3, row=11, sticky=(tk.W, tk.E))
+            self._update_grid_weight()
         else:
-            self._exist_label.grid_forget()
+            for widget in self.winfo_children():
+                widget.destroy()
+        # when packing the scrollframe, we pack scrollFrame itself (NOT the viewPort)
+        self.scrollFrame.pack(side="top", fill="both", expand=True)
 
-    def update_selected_project(self, data=None):
+    def _update_grid_weight(self):
+        cols, _ = self.scrollFrame.viewPort.grid_size()
+        for col in range(cols - 1):
+            self.scrollFrame.viewPort.columnconfigure(col, weight=1)
+
+    def update_selected_project(self, data: Optional[ConfigParser] = None):
         logger.debug("update selected project in scan view")
         self._project_info = data
         self.__update_view()
@@ -771,6 +914,9 @@ class ProjectActionView(ttk.Notebook, View):
         self.tab(self._scan_frame, text=i18n.project_actions_scan[PA_NAME])
         self.tab(self._registration_frame, text=i18n.project_actions_reg[PA_NAME])
         self.tab(self._final_frame, text=i18n.project_actions_final[PA_NAME])
+        self._final_frame.update_language()
+        self._scan_frame.update_language()
+        self._registration_frame.update_language()
 
     def __tabs_change_state(self, new_state):
         logger.debug(f"set all action tabs in state: {new_state}")

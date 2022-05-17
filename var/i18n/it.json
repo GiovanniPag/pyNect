@@ -189,7 +189,7 @@
     "reg": "Registrazione",
     "final": "File Finale",
     "done": "Fatto",
-    "not_done":"Non Fatto",
+    "not_done": "Non Fatto",
     "no_project": "Nessun progetto selezionato"
   },
   "project_actions": {
@@ -197,7 +197,23 @@
       "name": "Scansione",
       "exist": "Il progetto possiede già una scansione:",
       "merge": "Unisci",
-      "override": "Sovrascrivi"
+      "override": "Sovrascrivi",
+      "rot": "Scegli se ruotare il sensore intorno all'oggetto o l'oggetto di fronte al sensore",
+      "rot_obj": "Ruota oggetto",
+      "rot_cam": "Ruota sensore",
+      "face": "Scegli se ritagliare tramite rilevazione della posizione del volto o eliminando i punti distanti",
+      "face_crop": "Ritaglia distanti",
+      "face_detect": "Rileva volto",
+      "data": "Scegli se salvare solo i dati di profondità o anche i colori",
+      "data_depth": "Solo profondità",
+      "data_both": "Profondità più colori",
+      "fps": "Scegli quanti frame al secondo catturare (1-30):",
+      "time": "Scegli la durata in secondi della cattura o se usare i comandi manuali",
+      "time_sec": "A tempo",
+      "time_sec_info": "Durata (sec):",
+      "time_start": "Avvia cattura",
+      "time_stop": "Ferma cattura",
+      "time_manual": "Manuale"
     },
     "registration": {
       "name": "Registrazione"

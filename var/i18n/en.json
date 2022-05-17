@@ -189,7 +189,7 @@
     "reg": "Registration",
     "final": "Final file",
     "done": "Done",
-    "not_done":"Not done",
+    "not_done": "Not done",
     "no_project": "No project selected"
   },
   "project_actions": {
@@ -197,7 +197,23 @@
       "name": "Scan",
       "exist": "The project already has a scan:",
       "merge": "Merge",
-      "override": "Override"
+      "override": "Override",
+      "rot": "Choose whether to rotate the sensor around the object or the object in front of the sensor",
+      "rot_obj": "Rotate object",
+      "rot_cam": "Rotate sensor",
+      "face": "Choose whether to crop by detecting the position of the face or by eliminating distant points",
+      "face_crop": "Crop distant",
+      "face_detect": "Detect face",
+      "data": "Choose whether to save only the depth data or also the colors",
+      "data_depth": "Only depth",
+      "data_both": "Depth plus colors",
+      "fps": "Choose how many frames per second to capture (1-30):",
+      "time": "Choose the duration in seconds of the capture or whether to use the manual commands",
+      "time_sec": "Timed",
+      "time_sec_info" : "duration (sec):",
+      "time_start": "Start capture",
+      "time_stop": "Stop capture",
+      "time_manual": "Manual"
     },
     "registration": {
       "name": "Registration"
