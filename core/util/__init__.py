@@ -16,6 +16,14 @@ def open_guide():
                else_func=lambda: subprocess.Popen(["xdg-open", path]))
 
 
+def is_int(s):
+    try:
+        value = float(str(s))
+        return value.is_integer(), int(value)
+    except ValueError:
+        return False, None
+
+
 def open_log_folder():
     logger.debug("Open logs folder")
     path = Path(nect_config[CONFIG][LOG_FOLDER])

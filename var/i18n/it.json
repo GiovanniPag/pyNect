@@ -117,6 +117,19 @@
     }
   },
   "dialog": {
+    "scan_error": {
+      "message": "Errore nella validazione del modulo",
+      "title": "Pynect - Errore Scansione",
+      "detail": "Nel modulo di scansione mancano e/o sono sbagliati i seguenti: ",
+      "exist": "Operazione sulla scansione esistente non specificata",
+      "rot": "Rotazione non specificata",
+      "face": "Ritaglio non specificato",
+      "data": "Dati da acquisire non specificati",
+      "time": "Modalità di acquisizione non specificata",
+      "time_sec": "Tempo in secondi non specificato",
+      "time_sec_nan": "Tempo in secondi non è un numero",
+      "time_sec_wrong": "Tempo in secondi definito in maniera scorretta"
+    },
     "project_message": {
       "project_exist": {
         "message": "Errore nel nome del progetto",

@@ -7,15 +7,6 @@ from core.util.constants import *
 class I18N:
     # Internationalization
     def __init__(self):
-        # init all strings to none
-        self.title = None
-        self.menu_file = None
-        self.menu_edit = None
-        self.menu_sensor = None
-        self.menu_view = None
-        self.menu_window = None
-        self.menu_help = None
-
         self.language = nect_config[CONFIG][LANGUAGE]
         self.i18n_path = Path(nect_config[CONFIG][I18N_PATH])
         logger.debug(f"application language: {self.language} i18n path: {self.i18n_path}")
@@ -86,6 +77,8 @@ class I18N:
                 self.p_options_dialog = data['dialog']["p_options"]
                 # choose folder dialog
                 self.choose_folder_dialog = data['dialog']["choose_folder"]
+                # scan validation
+                self.scan_error_dialog = data['dialog']["scan_error"]
                 # tree view
                 self.tree_view = data['tree_view']
                 # device view

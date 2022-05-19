@@ -15,7 +15,7 @@ from core.util import config
 from core.util.config import logger, nect_config
 from core.util.constants import *
 from core.util.language_resource import i18n
-from core.views import View, AutoScrollbar, AutoWrapMessage, ScrollFrame, DiscreteStep
+from core.views import View, AutoScrollbar, AutoWrapMessage, ScrollFrame, DiscreteStep, check_num
 
 logger.debug("import pipeline module")
 try:
@@ -688,7 +688,7 @@ class ScanView(View):
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
-        self.scrollFrame = ScrollFrame(self)  # add a new scrollable frame.
+        self.scrollFrame = ScrollFrame(self, debug=False)  # add a new scrollable frame.
 
         self._project_info: Optional[ConfigParser] = None
         self._exist_message_info = tk.StringVar()
@@ -719,6 +719,7 @@ class ScanView(View):
         self._time_man_start = tk.StringVar()
         self._time_man_stop = tk.StringVar()
         self._fps_int = tk.IntVar()
+        self._empty_row = []
 
         self._exist_message: Optional[tk.Message] = None
         self._merge_scan: Optional[ttk.Radiobutton] = None
@@ -744,7 +745,32 @@ class ScanView(View):
         self._fps_scale: Optional[ttk.Scale] = None
         self._sec_entry: Optional[ttk.Entry] = None
         self._sec_progress: Optional[ttk.Progressbar] = None
+
+        self._buttons = {
+            PAS_START: lambda: self._man_start,
+            PAS_STOP: lambda: self._man_stop,
+            PAS_SEC_START: lambda: self._sec_start,
+            PAS_SEC_STOP: lambda: self._sec_stop
+        }
+
         self.update_language()
+
+    def set_command(self, btn_name, command):
+        logger.debug(f"scan action view set command {command} for {btn_name}")
+        if btn_name in self._buttons.keys():
+            button: ttk.Button = self._buttons.get(btn_name)()
+            button.configure(command=command)
+
+    def get_form(self):
+        return {
+            PAS_EXIST: self._exist_response.get(),
+            PAS_ROT: self._rot_response.get(),
+            PAS_FACE: self._face_response.get(),
+            PAS_DATA: self._capture_response.get(),
+            PAS_FPS: self._fps_int.get(),
+            PAS_TIME: self._time_response.get(),
+            PAS_SEC: self._sec_response.get()
+        }
 
     def update_language(self):
         logger.debug("update language in scan view")
@@ -772,44 +798,50 @@ class ScanView(View):
 
     def create_view(self):
         logger.debug("create view in scan view")
-        self._exist_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._exist_message_info)
+        self._exist_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._exist_message_info,
+                                              anchor="w")
         self._override_scan = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._override_scan_info,
                                               variable=self._exist_response, value=PAS_OVERRIDE)
         self._merge_scan = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._merge_scan_info,
                                            variable=self._exist_response,
                                            value=PAS_MERGE)
-        self._rot_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._rot_label_info)
+        self._rot_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._rot_label_info,
+                                            anchor="w")
         self._rot_obj = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._rot_obj_info,
                                         variable=self._rot_response, value=PAS_ROT_OBJ)
         self._rot_cam = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._rot_cam_info,
                                         variable=self._rot_response,
                                         value=PAS_ROT_CAM)
-        self._face_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._face_info)
+        self._face_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._face_info, anchor="w")
         self._face_crop = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._face_crop_info,
                                           variable=self._face_response, value=PAS_FACE_CROP)
         self._face_detect = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._face_detect_info,
                                             variable=self._face_response,
                                             value=PAS_FACE_DETECT)
 
-        self._capture_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._capture_info)
+        self._capture_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._capture_info,
+                                                anchor="w")
         self._capture_depth = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._capture_depth_info,
                                               variable=self._capture_response, value=PAS_DEPTH)
         self._capture_both = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._capture_both_info,
                                              variable=self._capture_response, value=PAS_BOTH)
-        self._time_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._time_info)
+        self._time_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._time_info, anchor="w")
         self._time_sec = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._time_sec_info,
-                                         variable=self._time_response, value=PAS_SEC)
+                                         variable=self._time_response, value=PAS_SEC, command=self._show_sec)
         self._time_man = ttk.Radiobutton(self.scrollFrame.viewPort, textvariable=self._time_man_info,
-                                         variable=self._time_response, value=PAS_MANUAL)
-        self._fps_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._fps_info)
-        self._sec_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._sec_info)
+                                         variable=self._time_response, value=PAS_MANUAL, command=self._show_man)
+        self._fps_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._fps_info, anchor="w")
+        self._sec_message = AutoWrapMessage(self.scrollFrame.viewPort, textvariable=self._sec_info, anchor="w")
         self._sec_start = ttk.Button(self.scrollFrame.viewPort, textvariable=self._time_sec_start, command=...)
         self._sec_stop = ttk.Button(self.scrollFrame.viewPort, textvariable=self._time_sec_stop, command=...)
         self._man_start = ttk.Button(self.scrollFrame.viewPort, textvariable=self._time_man_start, command=...)
         self._man_stop = ttk.Button(self.scrollFrame.viewPort, textvariable=self._time_man_stop, command=...)
-        self._fps_scale = DiscreteStep(self.scrollFrame.viewPort, orient=tk.HORIZONTAL, showvalue=1, step=1, length=200, from_=1.0,
+        self._fps_scale = DiscreteStep(self.scrollFrame.viewPort, orient=tk.HORIZONTAL, showvalue=1, step=1,
+                                       length=200,
+                                       from_=1.0,
                                        to=30.0, variable=self._fps_int)
-        self._sec_entry = ttk.Entry(self.scrollFrame.viewPort, textvariable=self._sec_response)
+        self._sec_entry = ttk.Entry(self.scrollFrame.viewPort, textvariable=self._sec_response, validate='key',
+                                    validatecommand=(self.master.register(check_num), '%P'))
         self._sec_progress = ttk.Progressbar(self.scrollFrame.viewPort, orient=tk.HORIZONTAL, length=200,
                                              mode='determinate')
 
@@ -825,42 +857,105 @@ class ScanView(View):
                 self._merge_scan.grid(column=1, row=1, sticky=(tk.W, tk.E))
                 self._override_scan.grid(column=3, row=1, sticky=(tk.W, tk.E))
                 self._exist_response.set(PAS_MERGE)
+                self._empty_row.append(2)
             else:
                 self._exist_message.grid_forget()
                 self._merge_scan.grid_forget()
                 self._override_scan.grid_forget()
-            self._rot_message.grid(column=0, row=2, columnspan=5, sticky=(tk.W, tk.E))
-            self._rot_obj.grid(column=1, row=3, sticky=(tk.W, tk.E))
-            self._rot_cam.grid(column=3, row=3, sticky=(tk.W, tk.E))
+                if 2 in self._empty_row:
+                    self._empty_row.remove(2)
+
+            self._rot_message.grid(column=0, row=3, columnspan=5, sticky=(tk.W, tk.E))
+            self._rot_obj.grid(column=1, row=4)
+            self._rot_cam.grid(column=3, row=4)
             self._rot_response.set(self._project_info.get(P_SCAN, P_SCAN_ROT, fallback=None))
-            self._face_message.grid(column=0, row=4, columnspan=5, sticky=(tk.W, tk.E))
-            self._face_crop.grid(column=1, row=5, sticky=(tk.W, tk.E))
-            self._face_detect.grid(column=3, row=5, sticky=(tk.W, tk.E))
-            self._capture_message.grid(column=0, row=6, columnspan=5, sticky=(tk.W, tk.E))
-            self._capture_both.grid(column=1, row=7, sticky=(tk.W, tk.E))
-            self._capture_depth.grid(column=3, row=7, sticky=(tk.W, tk.E))
-            self._fps_message.grid(column=0, row=8, columnspan=5, sticky=(tk.W, tk.E))
-            self._fps_scale.grid(column=0, row=9, columnspan=5, sticky=(tk.W, tk.E))
-            self._time_message.grid(column=0, row=10, columnspan=5, sticky=(tk.W, tk.E))
-            self._time_sec.grid(column=1, row=11, sticky=(tk.W, tk.E))
-            self._time_man.grid(column=3, row=11, sticky=(tk.W, tk.E))
+
+            self._empty_row.append(5)
+
+            self._face_message.grid(column=0, row=6, columnspan=5, sticky=(tk.W, tk.E))
+            self._face_crop.grid(column=1, row=7)
+            self._face_detect.grid(column=3, row=7)
+
+            self._empty_row.append(8)
+
+            self._capture_message.grid(column=0, row=9, columnspan=5, sticky=(tk.W, tk.E))
+            self._capture_both.grid(column=1, row=10)
+            self._capture_depth.grid(column=3, row=10)
+
+            self._empty_row.append(11)
+
+            self._fps_message.grid(column=0, row=12, columnspan=5, sticky=(tk.W, tk.E))
+            self._fps_scale.grid(column=0, row=13, columnspan=5)
+
+            self._empty_row.append(14)
+
+            self._time_message.grid(column=0, row=15, columnspan=5, sticky=(tk.W, tk.E))
+            self._time_sec.grid(column=1, row=16)
+            self._time_man.grid(column=3, row=16)
             self._update_grid_weight()
         else:
+            self._empty_row.clear()
             for widget in self.winfo_children():
                 widget.destroy()
         # when packing the scrollframe, we pack scrollFrame itself (NOT the viewPort)
         self.scrollFrame.pack(side="top", fill="both", expand=True)
 
+    def _show_man(self):
+        self._sec_progress.grid_forget()
+        self._sec_start.grid_forget()
+        self._sec_entry.grid_forget()
+        self._sec_stop.grid_forget()
+        self._sec_message.grid_forget()
+        if 17 not in self._empty_row:
+            self._empty_row.append(17)
+        self._man_start.grid(column=1, row=18)
+        self._man_stop.grid(column=3, row=18)
+        self._update_grid_weight()
+
+    def _show_sec(self):
+        self._sec_progress.grid_forget()
+        self._man_start.grid_forget()
+        self._man_stop.grid_forget()
+        if 17 not in self._empty_row:
+            self._empty_row.append(17)
+        self._sec_entry.grid(column=2, row=18, columnspan=3)
+        self._sec_message.grid(column=0, row=18, columnspan=2)
+        self._sec_start.grid(column=1, row=19)
+        self._sec_stop.grid(column=3, row=19)
+        self._update_grid_weight()
+
+    def _hide_sec_man(self):
+        self._sec_progress.grid_forget()
+        self._man_start.grid_forget()
+        self._man_stop.grid_forget()
+        self._sec_start.grid_forget()
+        self._sec_entry.grid_forget()
+        self._sec_stop.grid_forget()
+        self._sec_message.grid_forget()
+        if 17 in self._empty_row:
+            self._empty_row.remove(17)
+
     def _update_grid_weight(self):
         cols, _ = self.scrollFrame.viewPort.grid_size()
-        for col in range(cols - 1):
+        for col in range(cols):
             self.scrollFrame.viewPort.columnconfigure(col, weight=1)
+        for row in self._empty_row:
+            self.scrollFrame.viewPort.rowconfigure(row, minsize=20)
+
+    def _clear_selection(self):
+        self._rot_response.set("")
+        self._exist_response.set("")
+        self._time_response.set("")
+        self._capture_response.set("")
+        self._face_response.set("")
+        self._sec_response.set("")
 
     def update_selected_project(self, data: Optional[ConfigParser] = None):
         logger.debug("update selected project in scan view")
+        self._hide_sec_man()
+        self._clear_selection()
         self._project_info = data
         self.__update_view()
-
 
 class FinalView(View):
     def __init__(self, master=None):
@@ -878,7 +973,6 @@ class FinalView(View):
     def update_selected_project(self, data=None):
         logger.debug("update selected project in Final view")
         self._project_info = data
-
 
 class RegistrationView(View):
     def __init__(self, master=None):
@@ -898,7 +992,6 @@ class RegistrationView(View):
     def update_selected_project(self, data=None):
         logger.debug("update selected project in Registration view")
         self._project_info = data
-
 
 class ProjectActionView(ttk.Notebook, View):
     def __init__(self, master=None):

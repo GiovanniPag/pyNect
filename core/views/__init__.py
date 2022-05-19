@@ -24,6 +24,11 @@ def check_name(new_val):
     return re.match('^[a-zA-Z0-9-_]*$', new_val) is not None and len(new_val) <= 50
 
 
+def check_num(new_val):
+    logger.warning(f"validate only int {new_val}")
+    return re.match('^[0-9]*$', new_val) is not None and len(new_val) <= 3
+
+
 def sizeof_fmt(num, suffix="B"):
     logger.debug(f"format {num} in bytes")
     for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
@@ -89,16 +94,18 @@ class AutoWrapMessage(tk.Message):
     def __init__(self, master, margin=8, **kwargs):
         super().__init__(master, **kwargs)
         self.margin = margin
-        self.bind("<Configure>", lambda event: event.widget.configure(width=event.width - 8))
+        self.bind("<Configure>", lambda event: event.widget.configure(width=event.width - self.margin))
 
 
 class ScrollFrame(tk.Frame):
-    def __init__(self, master):
+    def __init__(self, master, debug=False):
         super().__init__(master)
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
         self.canvas = tk.Canvas(self, borderwidth=0)
-        self.viewPort = tk.Frame(self.canvas, background="#bbaaee")
+        self.viewPort = tk.Frame(self.canvas)
+        if debug:
+            self.viewPort.configure(background="#bbaaee")
         self.vsb = AutoScrollbar(self, geometry=GeometryManager.GRID, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.vsb.set)
         self.canvas.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))

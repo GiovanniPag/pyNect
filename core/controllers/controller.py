@@ -3,17 +3,17 @@ from datetime import datetime, timezone
 
 from tkinter import filedialog
 
-from core import open_message_dialog
+from core import open_message_dialog, open_error_dialog
 from core.controllers import Controller
 from core.models import store_open_project, add_to_open_projects, create_project_folder
-from core.util import open_guide, open_log_folder, check_if_folder_exist, check_if_is_project
+from core.util import open_guide, open_log_folder, check_if_folder_exist, check_if_is_project, is_int
 from core.util.config import logger, nect_config, change_fps
 from core.util.constants import *
 from core.util.language_resource import i18n
 from core.views import sizeof_fmt
 from core.views.dialog import DialogProjectOptions
-from core.views.view import MenuBar, ProjectTreeView, SensorView, DeviceView, SelectedFileView, \
-    ProjectInfoView, ProjectActionView, ScanView, FinalView, RegistrationView
+from core.views.view import MenuBar, ProjectTreeView, SensorView, DeviceView, SelectedFileView, ProjectInfoView, \
+    ProjectActionView, ScanView, FinalView, RegistrationView
 
 
 class MenuController(Controller):
@@ -275,10 +275,10 @@ class TreeController(Controller):
             if parent is not None:
                 self.__tree_nodes[path][T_PARENT] = parent
             self.__tree_nodes[path][T_VALUES] = {
-                    T_NAME: path.name,
-                    T_SIZE: sizeof_fmt(path.stat().st_size) if path.is_file() else "--",
-                    T_MODIFIED: datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).strftime(
-                        '%Y-%m-%d %H:%M')
+                T_NAME: path.name,
+                T_SIZE: sizeof_fmt(path.stat().st_size) if path.is_file() else "--",
+                T_MODIFIED: datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).strftime(
+                    '%Y-%m-%d %H:%M')
             }
 
     def populate_root_nodes(self):
@@ -361,15 +361,82 @@ class ScanController(Controller):
         super().__init__()
         self.view = None
         self.master = master
+        self.data = None
 
     def bind(self, v: ScanView):
         logger.debug(f"bind in Scan controller")
         self.view = v
         self.view.create_view()
+        self.view.set_command(PAS_START, lambda: self.start())
+        self.view.set_command(PAS_STOP, lambda: self.manual_stop())
+        self.view.set_command(PAS_SEC_START, lambda: self.start())
+        self.view.set_command(PAS_SEC_STOP, lambda: self.timed_cancel())
+
+    def start(self):
+        logger.debug(f"manual start of scan")
+        data = self.view.get_form()
+        valid, missing = self.validate_form_data(data)
+        logger.debug(f"check is {valid}, missing: {missing}")
+        if valid:
+            self.manual_start()
+        else:
+            open_error_dialog(self.master,missing)
+
+    def validate_form_data(self, data: dict):
+        logger.debug(f"validate form data: {data}")
+        missing = []
+        valid = {PAS_EXIST, PAS_ROT, PAS_FACE, PAS_DATA, PAS_TIME, PAS_SEC}.issubset(data.keys())
+        if valid:
+            if self.data.getboolean(P_SCAN, P_DONE):
+                if not data[PAS_EXIST] in {PAS_MERGE, PAS_OVERRIDE}:
+                    missing.append(PAS_EXIST)
+                    valid = False
+            if not data[PAS_ROT] in {PAS_ROT_CAM, PAS_ROT_OBJ}:
+                missing.append(PAS_ROT)
+                valid = False
+            if not data[PAS_FACE] in {PAS_FACE_CROP, PAS_FACE_DETECT}:
+                missing.append(PAS_FACE)
+                valid = False
+            if not data[PAS_DATA] in {PAS_DEPTH, PAS_BOTH}:
+                missing.append(PAS_DATA)
+                valid = False
+            if not isinstance(data[PAS_FPS], int):
+                missing.append(PAS_FPS)
+                valid = False
+            if not data[PAS_TIME] in {PAS_SEC, PAS_MANUAL}:
+                missing.append(PAS_TIME)
+                valid = False
+            if data[PAS_TIME] == PAS_SEC:
+                if data[PAS_SEC] == "":
+                    missing.append(PAS_SEC)
+                    valid = False
+                else:
+                    check, data[PAS_SEC] = is_int(data[PAS_SEC])
+                    if not check:
+                        missing.append(PAS_SEC_NAN)
+                        valid = False
+                    elif data[PAS_SEC] <= 0:
+                        missing.append(PAS_SEC_INCORRECT)
+                        valid = False
+        return valid, missing
+
+    def manual_start(self):
+        pass
+
+    def manual_stop(self):
+        pass
+
+    def timed_start(self):
+        pass
+
+    def timed_cancel(self):
+        pass
 
     def update_selected(self, data):
         logger.debug(f"update selected in Scan controller")
-        self.view.update_selected_project(data)
+        if not self.data or (self.data and self.data != data):
+            self.data = data
+            self.view.update_selected_project(data)
 
 
 class FinalController(Controller):
