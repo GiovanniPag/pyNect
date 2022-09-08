@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 
 from tkinter import filedialog
+from tkinter.messagebox import askyesno
 
 from core import open_message_dialog, open_error_dialog
 from core.controllers import Controller
@@ -11,7 +12,7 @@ from core.util.config import logger, nect_config, change_fps
 from core.util.constants import *
 from core.util.language_resource import i18n
 from core.views import sizeof_fmt
-from core.views.dialog import DialogProjectOptions
+from core.views.dialog import DialogProjectOptions, DialogTakePictureOptions
 from core.views.view import MenuBar, ProjectTreeView, SensorView, DeviceView, SelectedFileView, ProjectInfoView, \
     ProjectActionView, ScanView, FinalView, RegistrationView
 
@@ -39,12 +40,15 @@ class MenuController(Controller):
         self.view.update_command_or_cascade(M_EN, {M_COMMAND: lambda: self.language_change(M_EN)})
         # menu fps
         if not self.master.has_connected_device():
+            self.view.update_command_or_cascade(M_CALIBRATE, {M_STATE: "disabled"}, update_state=True)
             self.view.update_command_or_cascade(M_FPS, {M_STATE: "disabled"}, update_state=True)
         else:
             self.view.update_command_or_cascade(M_10FPS, {M_COMMAND: lambda: self.fps_change(REFRESH_RATE_10FPS)})
             self.view.update_command_or_cascade(M_15FPS, {M_COMMAND: lambda: self.fps_change(REFRESH_RATE_15FPS)})
             self.view.update_command_or_cascade(M_30FPS, {M_COMMAND: lambda: self.fps_change(REFRESH_RATE_30FPS)})
-            self.view.update_command_or_cascade(M_60FPS, {M_COMMAND: lambda: self.fps_change(REFRESH_RATE_60FPS)})
+            self.view.add_sensors()
+            for serial in self.master.devices:
+                self.view.update_command_or_cascade(serial, {M_COMMAND: lambda: self.calibrate(serial)})
         # menu file
         self.view.update_command_or_cascade(M_NEW, {M_COMMAND: lambda: self.create_new_project()})
         self.view.update_command_or_cascade(M_OPEN, {M_COMMAND: lambda: self.open_project()})
@@ -104,14 +108,35 @@ class MenuController(Controller):
             else:
                 creating = False
 
+    def calibrate(self, device_to_calibrate):
+        logger.debug(f"calibrate sensor: {device_to_calibrate}")
+        calibrate = True
+        #if check_if_sensor_calibrated(device_to_calibrate):
+        #    calibrate = self.ask_override_calibration()
+        if calibrate:
+            configs = self.get_take_pictures_configs()
+            if configs is not None:
+                take_pictures()
+                calibrate()
+
     def close_app(self):
         logger.debug("close app")
         self.master.destroy()
+
+    def ask_override_calibration(self):
+        logger.debug("ask to override calibration")
 
     def ask_project_name(self):
         logger.debug("open p_options dialog, ask project name")
         p_name = DialogProjectOptions(master=self.master).show()
         return p_name
+
+
+    def get_take_pictures_configs(self):
+        logger.debug("choose take pictures configs")
+        tk_options = DialogTakePictureOptions(master=self.master).show()
+        return tk_options
+
 
     def choose_folder(self):
         logger.debug("choose directory")
@@ -125,11 +150,13 @@ class MenuController(Controller):
             logger.debug("abort choosing")
             return ""
 
+
     def language_change(self, language):
         changed = i18n.change_language(language)
         if changed:
             logger.debug("menu_bar <<LanguageChange>> event generation")
             self.master.event_generate("<<LanguageChange>>")
+
 
     def fps_change(self, fps):
         changed = change_fps(fps)
@@ -362,6 +389,7 @@ class ScanController(Controller):
         self.view = None
         self.master = master
         self.data = None
+        self.scanning = False
 
     def bind(self, v: ScanView):
         logger.debug(f"bind in Scan controller")
@@ -378,9 +406,13 @@ class ScanController(Controller):
         valid, missing = self.validate_form_data(data)
         logger.debug(f"check is {valid}, missing: {missing}")
         if valid:
-            self.manual_start()
+            self.scanning = True
+            if data[PAS_TIME] == PAS_MANUAL:
+                self.manual_start()
+            else:
+                self.timed_start()
         else:
-            open_error_dialog(self.master,missing)
+            open_error_dialog(self.master, missing)
 
     def validate_form_data(self, data: dict):
         logger.debug(f"validate form data: {data}")
@@ -491,6 +523,7 @@ class ProjectActionController(Controller):
     def select_project(self, data):
         logger.debug(f"update selected project in project action controller")
         self.view.update_selected_project(data)
-        self._scan_controller.update_selected(data)
+        if self.master.has_connected_device():
+            self._scan_controller.update_selected(data)
         self._registration_controller.update_selected(data)
         self._final_controller.update_selected(data)

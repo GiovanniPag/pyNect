@@ -123,6 +123,7 @@ class MenuBar(tk.Menu, View):
         self.menu_help = tk.Menu(self, name=M_HELP)
         self.menu_help_language = tk.Menu(self.menu_help)
         self.menu_sensor_fps = tk.Menu(self.menu_sensor)
+        self.menu_sensor_calibrate = tk.Menu(self.menu_sensor)
         self.refresh_rate = tk.StringVar()
         self.language = tk.StringVar()
 
@@ -216,6 +217,10 @@ class MenuBar(tk.Menu, View):
                 M_VALUE: M_EN,
                 M_INDEX: 1
             },
+            M_CALIBRATE: {
+                M_MASTER: self.menu_sensor,
+                M_INDEX: 1
+            },
             M_FPS: {
                 M_MASTER: self.menu_sensor,
                 M_INDEX: 0
@@ -240,14 +245,7 @@ class MenuBar(tk.Menu, View):
                 M_VARIABLE: self.refresh_rate,
                 M_VALUE: REFRESH_RATE_30FPS,
                 M_INDEX: 2
-            },
-            M_60FPS: {
-                M_MASTER: self.menu_sensor_fps,
-                M_RADIO: True,
-                M_VARIABLE: self.refresh_rate,
-                M_VALUE: REFRESH_RATE_60FPS,
-                M_INDEX: 3
-            },
+            }
         }
 
     def create_view(self):
@@ -260,12 +258,13 @@ class MenuBar(tk.Menu, View):
         self.add_cascade_item(menu_name=M_SENSOR, menu_to_add=self.menu_sensor, info=i18n.menu_sensor)
         self.add_cascade_item(menu_name=M_HELP, menu_to_add=self.menu_help, info=i18n.menu_help)
         # menu_sensor items
+        self.add_cascade_item(menu_name=M_CALIBRATE, menu_to_add=self.menu_sensor_calibrate,
+                              info=i18n.menu_sensor_calibrate)
         self.add_cascade_item(menu_name=M_FPS, menu_to_add=self.menu_sensor_fps, info=i18n.menu_sensor_fps)
         # menu_sensor_fps items
         self.add_command_item(cmd_name=M_10FPS, info=i18n.menu_sensor_fps_10)
         self.add_command_item(cmd_name=M_15FPS, info=i18n.menu_sensor_fps_15)
         self.add_command_item(cmd_name=M_30FPS, info=i18n.menu_sensor_fps_30)
-        self.add_command_item(cmd_name=M_60FPS, info=i18n.menu_sensor_fps_60)
         # menu_file items
         self.add_command_item(cmd_name=M_NEW, info=i18n.menu_file_new)
         self.add_command_item(cmd_name=M_OPEN, info=i18n.menu_file_open)
@@ -316,12 +315,12 @@ class MenuBar(tk.Menu, View):
         self.update_command_or_cascade(name=M_IT, info_updated=i18n.menu_help_language_it)
         self.update_command_or_cascade(name=M_EN, info_updated=i18n.menu_help_language_en)
         # menu_sensor items
+        self.update_command_or_cascade(name=M_CALIBRATE, info_updated=i18n.menu_sensor_calibrate)
         self.update_command_or_cascade(name=M_FPS, info_updated=i18n.menu_sensor_fps)
         # menu_sensor_fps items
         self.update_command_or_cascade(name=M_10FPS, info_updated=i18n.menu_sensor_fps_10)
         self.update_command_or_cascade(name=M_15FPS, info_updated=i18n.menu_sensor_fps_15)
         self.update_command_or_cascade(name=M_30FPS, info_updated=i18n.menu_sensor_fps_30)
-        self.update_command_or_cascade(name=M_60FPS, info_updated=i18n.menu_sensor_fps_60)
 
     def add_cascade_item(self, menu_name, menu_to_add, info):
         logger.debug(f"add cascade item {menu_to_add} to {menu_name} with info {info}")
@@ -329,20 +328,32 @@ class MenuBar(tk.Menu, View):
                                                            underline=info.get(M_UNDERLINE, -1),
                                                            state=info.get(M_DEFAULT_STATE, M_STATE_NORMAL))
 
-    def add_command_item(self, cmd_name, info):
-        logger.debug(f"add command item {cmd_name} with info {info}")
-        if self.__menu_names[cmd_name].get(M_RADIO, False):
-            self.__menu_names[cmd_name][M_MASTER] \
-                .add_radiobutton(label=info.get(M_LABEL, ""), underline=info.get(M_UNDERLINE, -1),
+    def add_command_item(self, cmd_name, info=None):
+        if info:
+            logger.debug(f"add command item {cmd_name} with info {info}")
+            if self.__menu_names[cmd_name].get(M_RADIO, False):
+                self.__menu_names[cmd_name][M_MASTER] \
+                    .add_radiobutton(label=info.get(M_LABEL, ""), underline=info.get(M_UNDERLINE, -1),
+                                     state=info.get(M_DEFAULT_STATE, M_STATE_NORMAL),
+                                     variable=self.__menu_names[cmd_name][M_VARIABLE],
+                                     value=self.__menu_names[cmd_name][M_VALUE],
+                                     accelerator=info.get(M_ACCELERATOR, ""), command=...)
+            else:
+                self.__menu_names[cmd_name][M_MASTER] \
+                    .add_command(label=info.get(M_LABEL, ""), underline=info.get(M_UNDERLINE, -1),
                                  state=info.get(M_DEFAULT_STATE, M_STATE_NORMAL),
-                                 variable=self.__menu_names[cmd_name][M_VARIABLE],
-                                 value=self.__menu_names[cmd_name][M_VALUE],
                                  accelerator=info.get(M_ACCELERATOR, ""), command=...)
         else:
             self.__menu_names[cmd_name][M_MASTER] \
-                .add_command(label=info.get(M_LABEL, ""), underline=info.get(M_UNDERLINE, -1),
-                             state=info.get(M_DEFAULT_STATE, M_STATE_NORMAL),
-                             accelerator=info.get(M_ACCELERATOR, ""), command=...)
+                .add_command(label=cmd_name, state=M_STATE_NORMAL, command=...)
+
+    def add_sensors(self):
+        logger.debug(f"add sensors to calibrate menu")
+        for serial in self.master.devices:
+            self.__menu_names[serial] = {M_MASTER: self.menu_sensor_calibrate,
+                                         M_INDEX: 0 if self.menu_sensor_calibrate.index(tk.END) is None
+                                         else self.menu_sensor_calibrate.index(tk.END)+1}
+            self.add_command_item(cmd_name=serial)
 
     def update_command_or_cascade(self, name, info_updated, update_state=False):
         logger.debug(f"update item {name} with info {info_updated}")
@@ -467,6 +478,10 @@ class DeviceView(TabbedView):
         self._device.start()
         self._opened = True
         self._playing = False
+        cp = self._device.getColorCameraParams()
+        ip = self._device.getIrCameraParams()
+        logger.warning(str(cp.cx) + ", " + str(cp.cy) + ", " + str(cp.fx) + ", " + str(cp.fy))
+        logger.warning(str(ip.cx) + ", " + str(ip.cy) + ", " + str(ip.fx) + ", " + str(ip.fy))
 
     def opened(self):
         logger.debug("check if device is open in device view")
@@ -504,6 +519,7 @@ class DeviceView(TabbedView):
             for key in self.image_buffer:
                 self.image_buffer.update(
                     {key: (None, None, self.image_buffer[key][-1])})  # reset image buffer and keep depth map
+            # get frames from sensor here
             self.frames = self._listener.waitForNewFrame()
         self.after(int(nect_config[CONFIG][REFRESH_RATE]), self.refresh)
 
@@ -543,6 +559,8 @@ class DeviceView(TabbedView):
         # depth = open_cv.warpPerspective(depth, self._pers_rgb_ir, None,
         # borderMode=open_cv.BORDER_CONSTANT, borderValue=d_max)
         buffer = depth.astype(int)
+        logger.error(buffer == d_min)
+        logger.error(buffer[buffer == d_min])
         buffer[buffer == d_max], buffer[buffer == d_min] = -1, -1
         depth = depth / d_max  # normalize
         return self.__to_image(IB_DEPTH, depth, buffer)
@@ -558,9 +576,131 @@ class DeviceView(TabbedView):
         return self.master.master.devices.index(self._serial)
 
 
+class PlotFrame(View):
+    _RES = 6  # less is more expensive (more points to render)
+
+    def __init__(self, parent, root, serial, source, xyz=(1, 1, (0, 1))):
+        View.__init__(self, parent)
+
+        self.master = root
+
+        self.source = source[0]
+        self.colors = source[1]
+
+        self._pers_rgb_ir = PERSP_IR_TO_RGB[None]
+        if serial in PERSP_IR_TO_RGB:
+            self._pers_rgb_ir = PERSP_IR_TO_RGB[serial]
+
+        crop = self._pers_rgb_ir[0][0]  # scaling by perspective projection
+        xsize, ysize = IR_SCREEN_SIZE  # given
+        xfov, yfov = IR_SCREEN_FOV  # given
+
+        self.px_to_deg = (xfov / xsize + yfov / ysize) / 2 * np.sin(crop)
+
+        self.xyz = xyz
+
+        self._interrupt = False
+
+        self.data = None
+        self.colmap = None
+
+        self.__refresh()
+
+    def __refresh(self, draw=False, autoscale=True):
+
+        r = PlotFrame._RES
+        d = -75 * r + 500
+        s = 0.5 * r
+        if self.colors is None:
+            r, s = r // 2, s / 16  # non-scatter
+
+        if self.winfo_viewable() and self.master.playing():
+
+            if not draw:
+
+                _, _, depmap = self.source()
+
+                self.colmap = depmap // 255  # gray
+                if self.colors is not None:
+                    _, self.colmap, _ = self.colors()
+                    self.colmap = self.colmap / 255  # rgb
+
+                a = len(depmap) // r
+                b = len(depmap[0]) // r
+                i = -1
+
+                davg = 0
+                result = []
+                x, y, z, c = [None] * a * b, [None] * a * b, [None] * a * b, [None] * a * b
+                for py in range(a):
+                    for px in range(b):
+                        i += 1
+                        iy, ix = py * r, px * r
+                        if depmap[iy][ix] < 0: continue  # value in valid range?
+                        x[i] = ix - b * r // 2
+                        y[i] = iy - a * r // 2
+                        z[i] = depmap[iy][ix]
+                        davg += z[i]
+                        c[i] = self.colmap[iy][ix]
+
+                        x[i] = np.tan(np.deg2rad(self.px_to_deg * x[i])) * z[i]
+                        y[i] = np.tan(np.deg2rad(self.px_to_deg * y[i])) * z[i]
+
+                        result.append((z[i], x[i], y[i], c[i]))
+
+                if len(result) > 0:
+
+                    dmax = davg / len(z) * 2
+
+                    if autoscale:
+                        xw = int(np.sin(np.deg2rad(IR_SCREEN_FOV[0] / 2)) * dmax * 2)
+                        yw = int(np.sin(np.deg2rad(IR_SCREEN_FOV[1] / 2)) * dmax * 2)
+                        if xw > 2 and yw > 2:
+                            self.ax.set_ylim(((-xw // 2), (+xw // 2)))
+                            self.ax.set_zlim(((+yw // 2), (-yw // 2)))
+
+                    z, x, y, c = zip(*result)
+                    result = sorted(zip(z, x, y, c), reverse=True)  # sort by color
+                    self.data = list(zip(*result))  # z, x, y, c
+
+            else:
+
+                if self._interrupt:
+                    self._interrupt = False
+                    self.after(max(REFRESH_RATE, d // 2), self.__refresh)
+                    return
+
+                if len(self.data) > 0:
+
+                    z, x, y, c = self.data
+
+                    # x, y, z = np.broadcast_arrays(*[np.ravel(np.ma.filled(t, np.nan)) for t in [x, y, z]])
+                    # points._offsets3d = (z, x, y)  # positions
+                    # points._sizes = [s] * len(c)   # sizes set_sizes()
+                    # points.set_array(np.array(c))  # colors setFacecolor(), set_edgecolor()
+
+                    if self.colors is None:
+                        for lines in self.ax.lines:
+                            lines.remove()
+                        self.ax.plot(xs=z, ys=x, zs=y, marker='.', linestyle='', c='black', markersize=s)
+                    else:
+                        for child in self.ax.get_children():
+                            if isinstance(child, mpl3dart.Path3DCollection):
+                                child.remove()
+                        self.ax.scatter(xs=z, ys=x, zs=y, marker='.', cmap='jet', s=s, c=c)
+                        mpl.colors._colors_full_map.cache.clear()  # avoid memory leak by clearing the cache
+
+                    self.__draw()
+
+            self.after(max(REFRESH_RATE, d), self.__refresh, not draw)
+            return
+
+        self.after(max(REFRESH_RATE, d), self.__refresh, False)
+
+
 class ImageView(ttk.Frame):
 
-    def __init__(self, master, source, max_refresh=REFRESH_RATE_60FPS):
+    def __init__(self, master, source, max_refresh=REFRESH_RATE_30FPS):
         super().__init__(master)
 
         self.device = master
@@ -957,6 +1097,7 @@ class ScanView(View):
         self._project_info = data
         self.__update_view()
 
+
 class FinalView(View):
     def __init__(self, master=None):
         super().__init__(master)
@@ -973,6 +1114,7 @@ class FinalView(View):
     def update_selected_project(self, data=None):
         logger.debug("update selected project in Final view")
         self._project_info = data
+
 
 class RegistrationView(View):
     def __init__(self, master=None):
@@ -992,6 +1134,7 @@ class RegistrationView(View):
     def update_selected_project(self, data=None):
         logger.debug("update selected project in Registration view")
         self._project_info = data
+
 
 class ProjectActionView(ttk.Notebook, View):
     def __init__(self, master=None):

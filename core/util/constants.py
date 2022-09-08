@@ -15,6 +15,7 @@ LOG_FILENAME = "log_filename"
 PROJECTS_FOLDER = "projects_folder"
 GUIDE_FILE = "guide_file"
 REFRESH_RATE = "fps"
+CALIBRATION_PATH = "calibration_path"
 # config file config section default values
 LANGUAGE_DEFAULT = "it"
 I18N_PATH_DEFAULT = "var/i18n/"
@@ -23,6 +24,8 @@ LOGGER_PATH_DEFAULT = "var/.conf/logging.ini"
 LOG_FOLDER_DEFAULT = "var/.logs/"
 PROJECTS_FOLDER_DEFAULT = "projects/"
 GUIDE_FILE_DEFAULT = "var/guide.pdf"
+CALIBRATION_PATH_DEFAULT = "var/.calibration"
+
 
 # project config file items
 P_NAME = "name"
@@ -60,6 +63,13 @@ I18N_BACK_BUTTON = "back"
 I18N_CONFIRM_BUTTON = "confirm"
 I18N_CANCEL_BUTTON = "cancel"
 
+I18N_MODALITY = "modality"
+I18N_MANUAL = "manual"
+I18N_MANUAL_TIP = "manual_tip"
+I18N_AUTOMATIC = "automatic"
+I18N_AUTOMATIC_TIP = "automatic_tip"
+I18N_FRAMES = "frames"
+
 # Mac specific
 MAC_SHOW_HELP = 'tk::mac::ShowHelp'
 
@@ -83,11 +93,11 @@ M_FILE = "file"
 M_EDIT = "edit"
 M_HELP = "help"
 M_SENSOR = "sensor"
+M_CALIBRATE = "calibrate"
 M_FPS = "fps"
 M_10FPS = "10fps"
 M_15FPS = "15fps"
 M_30FPS = "30fps"
-M_60FPS = "60fps"
 M_NEW = "new"
 M_OPEN = "open"
 M_SETTINGS = "settings"
@@ -176,4 +186,3 @@ IB_COLOR = "color"
 REFRESH_RATE_10FPS = "100"
 REFRESH_RATE_15FPS = "66"
 REFRESH_RATE_30FPS = "33"
-REFRESH_RATE_60FPS = "16"

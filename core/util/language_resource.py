@@ -64,17 +64,18 @@ class I18N:
                 self.menu_help_logs = data['menu']['menu_help']["logs"]
                 self.menu_help_guide = data['menu']['menu_help']["guide"]
                 # menu sensor items
+                self.menu_sensor_calibrate = data['menu']['menu_sensor']['calibrate']
                 self.menu_sensor_fps = data['menu']['menu_sensor']['fps']
                 self.menu_sensor_fps_10 = data['menu']['menu_sensor']['fps']['10fps']
                 self.menu_sensor_fps_15 = data['menu']['menu_sensor']['fps']['15fps']
                 self.menu_sensor_fps_30 = data['menu']['menu_sensor']['fps']['30fps']
-                self.menu_sensor_fps_60 = data['menu']['menu_sensor']['fps']['60fps']
                 # dialog buttons
                 self.dialog_buttons = data['dialog']['buttons']
                 # project exist error dialog
                 self.project_message = data['dialog']["project_message"]
                 # about dialog
                 self.p_options_dialog = data['dialog']["p_options"]
+                self.tk_options_dialog = data['dialog']["tk_options"]
                 # choose folder dialog
                 self.choose_folder_dialog = data['dialog']["choose_folder"]
                 # scan validation

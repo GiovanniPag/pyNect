@@ -67,6 +67,11 @@
     "menu_sensor": {
       "label": "Sensore",
       "underline": 0,
+      "calibrate": {
+        "label": "Calibra sensore",
+        "default_state": "normal",
+        "underline": 0
+      },
       "fps": {
         "label": "Frequenza di aggiornamento",
         "default_state": "normal",
@@ -79,9 +84,6 @@
         },
         "30fps": {
           "label": "30 fps"
-        },
-        "60fps": {
-          "label": "60 fps"
         }
       }
     },
@@ -166,6 +168,20 @@
       "title": "Pynect - Opzioni Progetto",
       "name": "Nome progetto:",
       "name_tip": "Il nome del progetto non deve essere più lungo di 50 caratteri e non deve contenere spazi, caratteri o simboli speciali (- e _ sono concessi)."
+    },
+    "ask_confirm_abort": {
+      "title": "Pynect - Opzioni Progetto",
+      "confirm": "Nome progetto:",
+      "abort": "Il nome del progetto non deve essere più lungo di 50 caratteri e non deve contenere spazi, caratteri o simboli speciali (- e _ sono concessi)."
+    },
+    "tk_options": {
+      "title": "Pynect - Opzioni Calibrazione - Immagini",
+      "modality": "Modalità cattura immagini",
+      "manual": "Manuale",
+      "manual_tip": "cattura un immagine tramite input manuale",
+      "automatic": "Automatico",
+      "automatic_tip": "cattura un immagine ogni secondo",
+      "frames": "Numero di Immagini (20-30 consigliato):"
     },
     "choose_folder": {
       "title": "Seleziona la cartella in cui creare la cartella base del progetto"

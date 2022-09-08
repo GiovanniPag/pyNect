@@ -67,6 +67,11 @@
     "menu_sensor": {
       "label": "Sensor",
       "underline": 0,
+      "calibrate": {
+        "label": "Calibrate sensor",
+        "default_state": "normal",
+        "underline": 0
+      },
       "fps": {
         "label": "Refresh rate",
         "default_state": "normal",
@@ -79,9 +84,6 @@
         },
         "30fps": {
           "label": "30 fps"
-        },
-        "60fps": {
-          "label": "60 fps"
         }
       }
     },
@@ -118,18 +120,18 @@
   },
   "dialog": {
     "scan_error": {
-        "message": "Form validation error",
-        "title": "Pynect - Scan Error",
-        "detail": "The following are missing and/or incorrect in the scan form:",
-        "exist": "Existing scan operation not specified",
-        "rot": "Rotation not specified",
-        "face": "Crop not specified",
-        "data": "Data to be acquired not specified",
-        "time": "Acquisition mode not specified",
-        "time_sec": "Time in seconds not specified",
-        "time_sec_nan": "Time in seconds is not a number",
-        "time_sec_wrong": "Time in seconds is incorrect"
-      },
+      "message": "Form validation error",
+      "title": "Pynect - Scan Error",
+      "detail": "The following are missing and/or incorrect in the scan form:",
+      "exist": "Existing scan operation not specified",
+      "rot": "Rotation not specified",
+      "face": "Crop not specified",
+      "data": "Data to be acquired not specified",
+      "time": "Acquisition mode not specified",
+      "time_sec": "Time in seconds not specified",
+      "time_sec_nan": "Time in seconds is not a number",
+      "time_sec_wrong": "Time in seconds is incorrect"
+    },
     "project_message": {
       "project_exist": {
         "message": "Project name error",
@@ -166,6 +168,15 @@
       "title": "Pynect - Project Options",
       "name": "Project Name:",
       "name_tip": "The project name must be no longer than 50 characters and must contain no spaces, special characters or symbols (- and _ are allowed)."
+    },
+    "tk_options": {
+      "title": "Pynect - Calibration Options - Pictures",
+      "modality": "Image capture mode",
+      "manual": "Manual",
+      "manual_tip": "capture an image via manual input",
+      "automatic": "Automatic",
+      "automatic_tip": "capture an image every second",
+      "frames": "Number of Images (20-30 recommended):"
     },
     "choose_folder": {
       "title": "choose the folder in which you want to create the project directory"
@@ -223,7 +234,7 @@
       "fps": "Choose how many frames per second to capture (1-30):",
       "time": "Choose the duration in seconds of the capture or whether to use the manual commands",
       "time_sec": "Timed",
-      "time_sec_info" : "duration (sec):",
+      "time_sec_info": "duration (sec):",
       "time_start": "Start capture",
       "time_stop": "Stop capture",
       "time_manual": "Manual"

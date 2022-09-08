@@ -5,8 +5,10 @@ import tkinter.ttk as ttk
 from abc import abstractmethod
 from enum import Enum, auto
 from math import floor
+from pathlib import Path
 
-from core import logger
+from core import logger, CONFIG, CALIBRATION_PATH
+from core.util import nect_config, check_if_folder_exist
 
 
 class View(ttk.Frame):
@@ -36,6 +38,12 @@ def sizeof_fmt(num, suffix="B"):
             return f"{num:3.1f} {unit}{suffix}"
         num /= 1024.0
     return f"{num:.1f} Yi{suffix}"
+
+
+@staticmethod
+def check_if_sensor_calibrated(device_serial: str):
+    calibration_folder = Path(nect_config[CONFIG][CALIBRATION_PATH]) / device_serial
+    return check_if_folder_exist(calibration_folder)
 
 
 class GeometryManager(Enum):
