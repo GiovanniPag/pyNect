@@ -47,6 +47,12 @@ F_SCANS = "scans"
 F_REG = "reg"
 F_FINAL = "final"
 
+# calibration folders
+F_RESULTS = "calibration_results"
+F_RGB = "RGB"
+F_Depth = "Depth"
+F_IR = "IR"
+
 # tk icons
 BASENAME_ICON = "::tk::icons::"
 INFORMATION_ICON = "information"
@@ -61,6 +67,9 @@ I18N_NAME_TIP = "name_tip"
 I18N_oK_BUTTON = "ok"
 I18N_BACK_BUTTON = "back"
 I18N_CONFIRM_BUTTON = "confirm"
+I18N_YES_BUTTON = "yes"
+I18N_ONLY_CALIBRATION_BUTTON = "only_calibration"
+I18N_NO_BUTTON = "no"
 I18N_CANCEL_BUTTON = "cancel"
 
 I18N_MODALITY = "modality"

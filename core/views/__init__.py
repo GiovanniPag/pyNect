@@ -7,7 +7,7 @@ from enum import Enum, auto
 from math import floor
 from pathlib import Path
 
-from core import logger, CONFIG, CALIBRATION_PATH
+from core import logger, CONFIG, CALIBRATION_PATH, F_RGB, F_Depth, F_IR, F_RESULTS
 from core.util import nect_config, check_if_folder_exist
 
 
@@ -40,10 +40,12 @@ def sizeof_fmt(num, suffix="B"):
     return f"{num:.1f} Yi{suffix}"
 
 
-@staticmethod
 def check_if_sensor_calibrated(device_serial: str):
     calibration_folder = Path(nect_config[CONFIG][CALIBRATION_PATH]) / device_serial
-    return check_if_folder_exist(calibration_folder)
+    check = check_if_folder_exist(calibration_folder) and check_if_folder_exist(
+        calibration_folder / F_RGB) and check_if_folder_exist(calibration_folder / F_Depth) and check_if_folder_exist(
+        calibration_folder / F_IR) and check_if_folder_exist(calibration_folder / F_RESULTS)
+    return check
 
 
 class GeometryManager(Enum):
@@ -90,7 +92,7 @@ class DiscreteStep(tk.Scale):
         super().__init__(master, **kw)
         self.step = floor(step)
         self.variable: tk.IntVar = kw.get("variable")
-        self.value_list = list(range(int(kw.get("from_")), int(kw.get("to")+1), self.step))
+        self.value_list = list(range(int(kw.get("from_")), int(kw.get("to") + 1), self.step))
         self.configure(command=self.value_check)
 
     def value_check(self, value):

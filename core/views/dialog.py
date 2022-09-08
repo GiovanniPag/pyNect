@@ -7,8 +7,6 @@ from core.util.language_resource import i18n
 from core.views import check_name, ScrollFrame, ToolTip, DiscreteStep
 
 
-
-
 class Dialog(tk.Toplevel):
     def show(self):
         logger.debug(f"show dialog")
@@ -41,60 +39,6 @@ class Dialog(tk.Toplevel):
         logger.debug("Dismiss Dialog")
         self.dismiss_method()
         self.close()
-
-
-class DialogYesNo(Dialog):
-    def __init__(self, master):
-        super().__init__(master)
-        self.master = master
-        self.t = i18n.p_options_dialog[I18N_TITLE]
-        self.name_var = tk.StringVar()
-        self.name_var.set("")
-        self.back = False
-        self.name_label = i18n.p_options_dialog[I18N_NAME]
-        self.name_tip = i18n.p_options_dialog[I18N_NAME_TIP]
-
-    def ask_value(self):
-        logger.debug("Project Options Dialog ask value: " + self.name_var.get())
-        if self.back:
-            value = i18n.dialog_buttons[I18N_BACK_BUTTON]
-        else:
-            value = self.name_var.get()
-        return value
-
-    def dismiss_method(self):
-        logger.debug("Project Options Dialog dismiss method")
-        self.name_var.set("")
-
-    def go_back(self):
-        logger.debug("Project Options Dialog Back method")
-        self.back = True
-        self.close()
-
-    def create_view(self):
-        logger.debug("Project Options Dialog create view method")
-        self.title(self.t)
-        self.resizable(False, False)
-        self.rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-        tk.Label(self, image=FULL_QUESTION_ICON) \
-            .grid(row=0, column=0, rowspan=2, pady=(7, 0), padx=(7, 7), sticky="e")
-        ttk.Label(self, text=self.name_label, font="bold") \
-            .grid(row=0, column=1, columnspan=1, pady=(7, 7), padx=(7, 7), sticky="w")
-        # entry
-        entry = ttk.Entry(self, textvariable=self.name_var, validate='key',
-                          validatecommand=(self.master.register(check_name), '%P'))
-        entry.bind("<Return>", lambda event: self.close())
-        entry.grid(row=0, column=2, columnspan=3, pady=(7, 7), padx=(7, 7), sticky="we")
-        ttk.Label(self, text=self.name_tip, background="red", wraplength=400) \
-            .grid(row=1, column=1, columnspan=4, padx=(7, 7), sticky="we")
-        ttk.Button(self, text=i18n.dialog_buttons[I18N_CONFIRM_BUTTON], command=self.close) \
-            .grid(row=2, column=2, pady=(7, 7), padx=(7, 7), sticky="e")
-        ttk.Button(self, text=i18n.dialog_buttons[I18N_BACK_BUTTON], command=self.go_back) \
-            .grid(row=2, column=3, pady=(7, 7), padx=(7, 7), sticky="e")
-        ttk.Button(self, text=i18n.dialog_buttons[I18N_CANCEL_BUTTON], command=self.dismiss) \
-            .grid(row=2, column=4, pady=(7, 7), padx=(7, 7), sticky="e")
-        entry.focus_set()
 
 
 class DialogProjectOptions(Dialog):
@@ -200,7 +144,7 @@ class DialogTakePictureOptions(Dialog):
         ttk.Label(self, text=self.frames_label, font="bold") \
             .grid(row=2, column=1, columnspan=2, pady=(7, 7), padx=(7, 7), sticky="we")
         DiscreteStep(self, orient=tk.HORIZONTAL, showvalue=1, step=1,
-                     length=200, from_=15.0, to=60.0, variable=self.frames_var)\
+                     length=200, from_=15.0, to=60.0, variable=self.frames_var) \
             .grid(row=3, column=1, columnspan=3, padx=(7, 7), sticky="we")
 
         # buttons
@@ -232,10 +176,79 @@ class DialogMessage(Dialog):
         self.resizable(False, False)
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
-        tk.Label(self, image=BASENAME_ICON+self.icon) \
+        tk.Label(self, image=BASENAME_ICON + self.icon) \
             .grid(row=0, column=0, rowspan=2, pady=(7, 0), padx=(7, 7), sticky="e")
         ttk.Label(self, text=self.message, font="bold") \
             .grid(row=0, column=1, columnspan=2, pady=(7, 7), padx=(7, 7), sticky="w")
         ttk.Label(self, text=self.detail).grid(row=1, column=1, columnspan=2, pady=(7, 7), padx=(7, 7), sticky="w")
         ttk.Button(self, text=i18n.dialog_buttons[I18N_BACK_BUTTON], command=self.dismiss) \
             .grid(row=2, column=2, pady=(7, 7), padx=(7, 7), sticky="e")
+
+
+class DialogYesNo(Dialog):
+
+    def create_view(self):
+        logger.debug("Project Options Dialog create view method")
+        self.title(self.t)
+        self.resizable(False, False)
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+        tk.Label(self, image=FULL_QUESTION_ICON) \
+            .grid(row=0, column=0, rowspan=2, pady=(7, 0), padx=(7, 7), sticky="e")
+        ttk.Label(self, text=self.name_label, font="bold") \
+            .grid(row=0, column=1, columnspan=1, pady=(7, 7), padx=(7, 7), sticky="w")
+        # entry
+        entry = ttk.Entry(self, textvariable=self.name_var, validate='key',
+                          validatecommand=(self.master.register(check_name), '%P'))
+        entry.bind("<Return>", lambda event: self.close())
+        entry.grid(row=0, column=2, columnspan=3, pady=(7, 7), padx=(7, 7), sticky="we")
+        ttk.Label(self, text=self.name_tip, background="red", wraplength=400) \
+            .grid(row=1, column=1, columnspan=4, padx=(7, 7), sticky="we")
+        ttk.Button(self, text=i18n.dialog_buttons[I18N_CONFIRM_BUTTON], command=self.close) \
+            .grid(row=2, column=2, pady=(7, 7), padx=(7, 7), sticky="e")
+        ttk.Button(self, text=i18n.dialog_buttons[I18N_BACK_BUTTON], command=self.go_back) \
+            .grid(row=2, column=3, pady=(7, 7), padx=(7, 7), sticky="e")
+        ttk.Button(self, text=i18n.dialog_buttons[I18N_CANCEL_BUTTON], command=self.dismiss) \
+            .grid(row=2, column=4, pady=(7, 7), padx=(7, 7), sticky="e")
+        entry.focus_set()
+
+
+class DialogAsk(Dialog):
+    def __init__(self, master, title, message, detail,
+                 options=None, default_response=I18N_NO_BUTTON, icon=INFORMATION_ICON):
+        super().__init__(master)
+        self.master = master
+        self.icon = icon
+        self.t = title
+        self.message = message
+        self.detail = detail
+        self.default_response = default_response
+        if options is None:
+            self.options = [I18N_NO_BUTTON, I18N_YES_BUTTON]
+        else:
+            self.options = options
+        self.response_var = tk.StringVar(value=default_response)
+
+    def ask_value(self):
+        logger.debug("ask Dialog: " + self.response_var.get())
+        return self.response_var.get()
+
+    def dismiss_method(self):
+        logger.debug("ask Dialog dismiss method")
+        self.response_var.set(self.default_response)
+
+    def create_view(self):
+        logger.debug("ask Dialog create view method")
+        self.title(self.t)
+        self.resizable(False, False)
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+        tk.Label(self, image=BASENAME_ICON + self.icon) \
+            .grid(row=0, column=0, rowspan=2, pady=(7, 0), padx=(7, 7), sticky="e")
+        ttk.Label(self, text=self.message, font="bold") \
+            .grid(row=0, column=1, columnspan=(1 + len(self.options)), pady=(7, 7), padx=(7, 7), sticky="w")
+        ttk.Label(self, text=self.detail).grid(row=1, column=1, columnspan=(1 + len(self.options)), pady=(7, 7),
+                                               padx=(7, 7), sticky="w")
+        for index, option in enumerate(self.options):
+            b = ttk.Button(self, text=i18n.dialog_buttons[option])
+            b.grid(row=2, column=2+index, pady=(7, 7), padx=(7, 7), sticky="e")

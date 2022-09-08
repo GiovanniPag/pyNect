@@ -1,8 +1,6 @@
-from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 
 from tkinter import filedialog
-from tkinter.messagebox import askyesno
 
 from core import open_message_dialog, open_error_dialog
 from core.controllers import Controller
@@ -11,8 +9,8 @@ from core.util import open_guide, open_log_folder, check_if_folder_exist, check_
 from core.util.config import logger, nect_config, change_fps
 from core.util.constants import *
 from core.util.language_resource import i18n
-from core.views import sizeof_fmt
-from core.views.dialog import DialogProjectOptions, DialogTakePictureOptions
+from core.views import sizeof_fmt, check_if_sensor_calibrated
+from core.views.dialog import DialogProjectOptions, DialogTakePictureOptions, DialogAsk
 from core.views.view import MenuBar, ProjectTreeView, SensorView, DeviceView, SelectedFileView, ProjectInfoView, \
     ProjectActionView, ScanView, FinalView, RegistrationView
 
@@ -111,8 +109,9 @@ class MenuController(Controller):
     def calibrate(self, device_to_calibrate):
         logger.debug(f"calibrate sensor: {device_to_calibrate}")
         calibrate = True
-        #if check_if_sensor_calibrated(device_to_calibrate):
-        #    calibrate = self.ask_override_calibration()
+        self.ask_override_calibration()
+        if check_if_sensor_calibrated(device_to_calibrate):
+            calibrate = self.ask_override_calibration()
         if calibrate:
             configs = self.get_take_pictures_configs()
             if configs is not None:
@@ -125,18 +124,22 @@ class MenuController(Controller):
 
     def ask_override_calibration(self):
         logger.debug("ask to override calibration")
+        tk_override = DialogAsk(master=self.master, title=i18n.tk_override_dialog[I18N_TITLE],
+                                message=i18n.tk_override_dialog[I18N_MESSAGE],
+                                detail=i18n.tk_override_dialog[I18N_DETAIL],
+                                options=[I18N_ONLY_CALIBRATION_BUTTON, I18N_NO_BUTTON, I18N_YES_BUTTON],
+                                default_response=I18N_NO_BUTTON, icon=ERROR_ICON).show()
+        return tk_override
 
     def ask_project_name(self):
         logger.debug("open p_options dialog, ask project name")
         p_name = DialogProjectOptions(master=self.master).show()
         return p_name
 
-
     def get_take_pictures_configs(self):
         logger.debug("choose take pictures configs")
         tk_options = DialogTakePictureOptions(master=self.master).show()
         return tk_options
-
 
     def choose_folder(self):
         logger.debug("choose directory")
@@ -150,13 +153,11 @@ class MenuController(Controller):
             logger.debug("abort choosing")
             return ""
 
-
     def language_change(self, language):
         changed = i18n.change_language(language)
         if changed:
             logger.debug("menu_bar <<LanguageChange>> event generation")
             self.master.event_generate("<<LanguageChange>>")
-
 
     def fps_change(self, fps):
         changed = change_fps(fps)

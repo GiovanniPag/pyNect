@@ -178,6 +178,11 @@
       "automatic_tip": "capture an image every second",
       "frames": "Number of Images (20-30 recommended):"
     },
+    "tk_override": {
+      "title": "Pynect - OCalibration Options - Overwrite",
+      "message": "Do you want to overwrite the existing calibration?",
+      "detail": "Capture new images or just perform a new calibration?"
+    },
     "choose_folder": {
       "title": "choose the folder in which you want to create the project directory"
     },
@@ -185,7 +190,10 @@
       "ok": "Ok",
       "back": "Back",
       "confirm": "Confirm",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "yes": "Yes",
+      "no": "No",
+      "only_calibration": "Only calibration"
     }
   },
   "tree_view": {

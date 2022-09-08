@@ -183,6 +183,11 @@
       "automatic_tip": "cattura un immagine ogni secondo",
       "frames": "Numero di Immagini (20-30 consigliato):"
     },
+    "tk_override": {
+      "title": "Pynect - Opzioni Calibrazione - Sovrascrivi",
+      "message": "Sovrascrivere la calibrazione esistente?",
+      "detail": "Catturare nuove immagini o eseguire solo una nuova calibrazione?"
+    },
     "choose_folder": {
       "title": "Seleziona la cartella in cui creare la cartella base del progetto"
     },
@@ -190,7 +195,10 @@
       "ok": "Ok",
       "back": "Indietro",
       "confirm": "Conferma",
-      "cancel": "Annulla"
+      "cancel": "Annulla",
+      "yes": "Si",
+      "no": "No",
+      "only_calibration": "Solo calibrazione"
     }
   },
   "tree_view": {

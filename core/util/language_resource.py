@@ -76,6 +76,7 @@ class I18N:
                 # about dialog
                 self.p_options_dialog = data['dialog']["p_options"]
                 self.tk_options_dialog = data['dialog']["tk_options"]
+                self.tk_override_dialog = data['dialog']["tk_override"]
                 # choose folder dialog
                 self.choose_folder_dialog = data['dialog']["choose_folder"]
                 # scan validation
