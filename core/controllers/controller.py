@@ -108,19 +108,22 @@ class MenuController(Controller):
 
     def calibrate(self, device_to_calibrate):
         logger.debug(f"calibrate sensor: {device_to_calibrate}")
-        calibrate = True
-        self.ask_override_calibration()
+        calibrate = I18N_NO_BUTTON
         if check_if_sensor_calibrated(device_to_calibrate):
             calibrate = self.ask_override_calibration()
-        if calibrate:
+        if calibrate == I18N_YES_BUTTON:
             configs = self.get_take_pictures_configs()
             if configs is not None:
-                take_pictures()
+                self.take_pictures()
+        if calibrate in {I18N_YES_BUTTON, I18N_ONLY_CALIBRATION_BUTTON}:
                 calibrate()
 
     def close_app(self):
         logger.debug("close app")
         self.master.destroy()
+
+    def take_pictures(self):
+        return
 
     def ask_override_calibration(self):
         logger.debug("ask to override calibration")

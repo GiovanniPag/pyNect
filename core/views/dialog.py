@@ -185,49 +185,21 @@ class DialogMessage(Dialog):
             .grid(row=2, column=2, pady=(7, 7), padx=(7, 7), sticky="e")
 
 
-class DialogYesNo(Dialog):
-
-    def create_view(self):
-        logger.debug("Project Options Dialog create view method")
-        self.title(self.t)
-        self.resizable(False, False)
-        self.rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-        tk.Label(self, image=FULL_QUESTION_ICON) \
-            .grid(row=0, column=0, rowspan=2, pady=(7, 0), padx=(7, 7), sticky="e")
-        ttk.Label(self, text=self.name_label, font="bold") \
-            .grid(row=0, column=1, columnspan=1, pady=(7, 7), padx=(7, 7), sticky="w")
-        # entry
-        entry = ttk.Entry(self, textvariable=self.name_var, validate='key',
-                          validatecommand=(self.master.register(check_name), '%P'))
-        entry.bind("<Return>", lambda event: self.close())
-        entry.grid(row=0, column=2, columnspan=3, pady=(7, 7), padx=(7, 7), sticky="we")
-        ttk.Label(self, text=self.name_tip, background="red", wraplength=400) \
-            .grid(row=1, column=1, columnspan=4, padx=(7, 7), sticky="we")
-        ttk.Button(self, text=i18n.dialog_buttons[I18N_CONFIRM_BUTTON], command=self.close) \
-            .grid(row=2, column=2, pady=(7, 7), padx=(7, 7), sticky="e")
-        ttk.Button(self, text=i18n.dialog_buttons[I18N_BACK_BUTTON], command=self.go_back) \
-            .grid(row=2, column=3, pady=(7, 7), padx=(7, 7), sticky="e")
-        ttk.Button(self, text=i18n.dialog_buttons[I18N_CANCEL_BUTTON], command=self.dismiss) \
-            .grid(row=2, column=4, pady=(7, 7), padx=(7, 7), sticky="e")
-        entry.focus_set()
-
-
 class DialogAsk(Dialog):
     def __init__(self, master, title, message, detail,
-                 options=None, default_response=I18N_NO_BUTTON, icon=INFORMATION_ICON):
+                 options=None, dismiss_response=I18N_NO_BUTTON, icon=INFORMATION_ICON):
         super().__init__(master)
         self.master = master
         self.icon = icon
         self.t = title
         self.message = message
         self.detail = detail
-        self.default_response = default_response
+        self.dismiss_response = dismiss_response
         if options is None:
             self.options = [I18N_NO_BUTTON, I18N_YES_BUTTON]
         else:
             self.options = options
-        self.response_var = tk.StringVar(value=default_response)
+        self.response_var = tk.StringVar(value=dismiss_response)
 
     def ask_value(self):
         logger.debug("ask Dialog: " + self.response_var.get())
@@ -235,7 +207,12 @@ class DialogAsk(Dialog):
 
     def dismiss_method(self):
         logger.debug("ask Dialog dismiss method")
-        self.response_var.set(self.default_response)
+        self.response_var.set(self.dismiss_response)
+
+    def response(self, option):
+        logger("ask Dialog respond with"+option)
+        self.response_var.set(option)
+        self.close()
 
     def create_view(self):
         logger.debug("ask Dialog create view method")
@@ -250,5 +227,5 @@ class DialogAsk(Dialog):
         ttk.Label(self, text=self.detail).grid(row=1, column=1, columnspan=(1 + len(self.options)), pady=(7, 7),
                                                padx=(7, 7), sticky="w")
         for index, option in enumerate(self.options):
-            b = ttk.Button(self, text=i18n.dialog_buttons[option])
-            b.grid(row=2, column=2+index, pady=(7, 7), padx=(7, 7), sticky="e")
+            b = ttk.Button(self, text=i18n.dialog_buttons[option], command=self.response(option))
+            b.grid(row=2, column=2 + index, pady=(7, 7), padx=(7, 7), sticky="e")
