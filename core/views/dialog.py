@@ -1,4 +1,5 @@
 import tkinter as tk
+from pprint import pprint
 from tkinter import ttk
 from abc import abstractmethod
 from core.util.config import logger
@@ -210,7 +211,7 @@ class DialogAsk(Dialog):
         self.response_var.set(self.dismiss_response)
 
     def response(self, option):
-        logger("ask Dialog respond with"+option)
+        logger.debug("ask Dialog respond with: " + option)
         self.response_var.set(option)
         self.close()
 
@@ -227,5 +228,5 @@ class DialogAsk(Dialog):
         ttk.Label(self, text=self.detail).grid(row=1, column=1, columnspan=(1 + len(self.options)), pady=(7, 7),
                                                padx=(7, 7), sticky="w")
         for index, option in enumerate(self.options):
-            b = ttk.Button(self, text=i18n.dialog_buttons[option], command=self.response(option))
+            b = ttk.Button(self, text=i18n.dialog_buttons[option], command=lambda opt=option: self.response(opt))
             b.grid(row=2, column=2 + index, pady=(7, 7), padx=(7, 7), sticky="e")

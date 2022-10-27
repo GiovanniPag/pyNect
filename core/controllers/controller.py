@@ -4,7 +4,7 @@ from tkinter import filedialog
 
 from core import open_message_dialog, open_error_dialog
 from core.controllers import Controller
-from core.models import store_open_project, add_to_open_projects, create_project_folder
+from core.models import store_open_project, add_to_open_projects, create_project_folder, create_calibration_folder
 from core.util import open_guide, open_log_folder, check_if_folder_exist, check_if_is_project, is_int
 from core.util.config import logger, nect_config, change_fps
 from core.util.constants import *
@@ -108,22 +108,25 @@ class MenuController(Controller):
 
     def calibrate(self, device_to_calibrate):
         logger.debug(f"calibrate sensor: {device_to_calibrate}")
-        calibrate = I18N_NO_BUTTON
+        calibrate = I18N_YES_BUTTON
+        configs = None
         if check_if_sensor_calibrated(device_to_calibrate):
             calibrate = self.ask_override_calibration()
         if calibrate == I18N_YES_BUTTON:
             configs = self.get_take_pictures_configs()
+            create_calibration_folder(device_to_calibrate)
             if configs is not None:
-                self.take_pictures()
-        if calibrate in {I18N_YES_BUTTON, I18N_ONLY_CALIBRATION_BUTTON}:
-                calibrate()
+                self.take_pictures(configs)
+        if calibrate == {I18N_ONLY_CALIBRATION_BUTTON} and configs is not None:
+                calibration()
+
+    def take_pictures(self, configs):
+        self.master.take_pictures(data=configs, calibration=True)
+        return
 
     def close_app(self):
         logger.debug("close app")
         self.master.destroy()
-
-    def take_pictures(self):
-        return
 
     def ask_override_calibration(self):
         logger.debug("ask to override calibration")
@@ -131,7 +134,7 @@ class MenuController(Controller):
                                 message=i18n.tk_override_dialog[I18N_MESSAGE],
                                 detail=i18n.tk_override_dialog[I18N_DETAIL],
                                 options=[I18N_ONLY_CALIBRATION_BUTTON, I18N_NO_BUTTON, I18N_YES_BUTTON],
-                                default_response=I18N_NO_BUTTON, icon=ERROR_ICON).show()
+                                dismiss_response=I18N_NO_BUTTON, icon=ERROR_ICON).show()
         return tk_override
 
     def ask_project_name(self):
@@ -197,14 +200,27 @@ class SensorController(Controller):
         logger.debug("bind in sensor controller")
         self.view = v
         logger.debug("sensor view bind switch function")
-        self.view.switch_func = lambda old, new: self.switch(old, new)
+        self.view.sensor_list.switch_func = lambda old, new: self.switch(old, new)
         logger.debug("sensor view add all device views")
         self.view.create_view()
         for serial in self.master.devices:
-            self._views.append(DeviceView(self.view, self.master.fn, serial))
+            self._views.append(DeviceView(self.view.sensor_list, self.master.fn, serial=serial, borderwidth=5, relief="ridge", style="Device.TFrame"))
             self._controllers.append(DeviceController(self.master))
             self._controllers[-1].bind(self._views[-1])
-            self.view.add(serial, self._views[-1], serial)
+            self.view.sensor_list.add(serial, self._views[-1], serial)
+
+    def take_calibration_pictures(self, calib_conf):
+        modality = calib_conf[I18N_MODALITY]
+        frames = calib_conf[I18N_FRAMES]
+
+        return
+
+    def take_pictures_manual(self, number, modality=TK_MANUAL):
+        return
+
+    def take_pictures_timed(self, frames_to_capture, time_between=1):
+
+        return
 
     @staticmethod
     def switch(old_dev, new_dev):

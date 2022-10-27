@@ -229,6 +229,10 @@
     "not_done": "Non Fatto",
     "no_project": "Nessun progetto selezionato"
   },
+  "sensor_view": {
+    "buttons": {
+    }
+  },
   "project_actions": {
     "scan": {
       "name": "Scansione",

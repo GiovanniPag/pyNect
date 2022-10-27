@@ -224,6 +224,10 @@
     "not_done": "Not done",
     "no_project": "No project selected"
   },
+  "sensor_view": {
+    "buttons": {
+    }
+  },
   "project_actions": {
     "scan": {
       "name": "Scan",

@@ -17,6 +17,21 @@ def create_project_folder(path: Path):
         logger.debug("Successfully created the project directories")
 
 
+def create_calibration_folder(serial):
+    calibration_path = Path(nect_config[CONFIG][CALIBRATION_PATH])
+    try:
+        calibration_path.mkdir(parents=True, exist_ok=True)
+        (calibration_path / serial).mkdir(parents=True, exist_ok=True)
+        (calibration_path / serial / F_RESULTS).mkdir(parents=True, exist_ok=True)
+        (calibration_path / serial / F_RGB).mkdir(parents=True, exist_ok=True)
+        (calibration_path / serial / F_IR).mkdir(parents=True, exist_ok=True)
+        (calibration_path / serial / F_Depth).mkdir(parents=True, exist_ok=True)
+    except (FileExistsError, FileNotFoundError):
+        logger.exception("Creation of the calibration directories failed")
+    else:
+        logger.debug("Successfully created the calibration directories")
+
+
 def add_to_open_projects(path: Path, name=""):
     logger.debug(f"add project {path} to open projects in config file")
     if name:

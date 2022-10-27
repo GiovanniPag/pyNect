@@ -11,7 +11,7 @@ from tkinter import HORIZONTAL, VERTICAL
 from core import open_message_dialog
 from core.util import call_by_ws, config as c, check_if_folder_exist, check_if_is_project
 from core.util.config import logger, nect_config, purge_option_config
-from core.util.constants import OPEN_PROJECTS, P_PATH, ERROR_ICON
+from core.util.constants import OPEN_PROJECTS, P_PATH, ERROR_ICON, I18N_MODALITY, I18N_FRAMES
 from core.util.language_resource import i18n
 from core.controllers.controller import MenuController, Controller, TreeController, \
     SensorController, SelectedFileController, SelectedProjectController, ProjectActionController
@@ -43,6 +43,7 @@ class PyNect(tk.Tk):
 
         self.__check_devices()
         self.__recover_model()
+        self.__create_style()
         self.__create_gui()
         self.__create_controllers()
         self.__bind_controllers()
@@ -95,6 +96,21 @@ class PyNect(tk.Tk):
         logger.debug(f"add {project_data} from {project_data[project_name][P_PATH]} to open projects")
         self.open_projects[project_data[project_name][P_PATH]] = project_data
 
+    @staticmethod
+    def __create_style():
+        logger.debug("create style")
+        # Initialize style
+        s = ttk.Style()
+        # Create style used by default for all Frames
+        s.configure('TFrame', background='green')
+        # Create style for the first frame
+        s.configure('Right.TFrame', background='red')
+        s.configure('Image.TFrame', background='blue')
+        s.configure('Device.TFrame', background='purple')
+        s.configure('Sensor.TFrame', background='yellow')
+        s.configure('SList.TFrame', background='pink')
+        s.configure('SButtons.TFrame', background='orange')
+
     # create all view classes
     def __create_gui(self):
         logger.debug("create gui")
@@ -107,7 +123,7 @@ class PyNect(tk.Tk):
         mainframe = ttk.PanedWindow(self, orient=HORIZONTAL)
         mainframe.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
         logger.debug("right frame initialization")
-        right_frame = ttk.PanedWindow(self, orient=VERTICAL)
+        right_frame = ttk.PanedWindow(self, orient=VERTICAL, style="Right.TFrame")
         logger.debug("center frame initialization")
         center_frame = ttk.PanedWindow(self, orient=VERTICAL)
         # create views
@@ -121,7 +137,7 @@ class PyNect(tk.Tk):
         center_frame.add(self.project_info, weight=1)
         center_frame.add(self.project_actions, weight=5)
         # right views
-        self.kinect = SensorView(self)
+        self.kinect = SensorView(self, style="Sensor.TFrame")
         self.selected_file = SelectedFileView(self)
         right_frame.add(self.kinect, weight=5)
         right_frame.add(self.selected_file, weight=1)
@@ -176,6 +192,12 @@ class PyNect(tk.Tk):
         path = self.tree_controller.get_last_selected_file()
         logger.debug(f"select file event {event} data {path}")
         self.selected_controller.update_view(path)
+
+    def take_pictures(self, data, calibration=False):
+        if calibration:
+            self.sensor_controller.take_calibration_pictures(data)
+        else:
+            return
 
     def update_fps(self):
         pass

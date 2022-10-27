@@ -182,6 +182,14 @@ PAS_STOP = "time_stop"
 PAS_SEC_START = "time_start_sec"
 PAS_SEC_STOP = "time_stop_sec"
 
+# sensor builder kit
+S_BUTTON = "button"
+S_TEXT = "text"
+
+# take pictures constants
+TK_MANUAL = "manual"
+TK_TIMED = "time"
+
 # device view strings
 D_RGB = "rgb"
 D_IR = "ir"

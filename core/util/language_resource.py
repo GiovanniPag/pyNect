@@ -71,6 +71,8 @@ class I18N:
                 self.menu_sensor_fps_30 = data['menu']['menu_sensor']['fps']['30fps']
                 # dialog buttons
                 self.dialog_buttons = data['dialog']['buttons']
+                # sensor buttons
+                self.sensor_buttons = data['sensor_view']['buttons']
                 # project exist error dialog
                 self.project_message = data['dialog']["project_message"]
                 # about dialog

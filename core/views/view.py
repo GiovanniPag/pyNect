@@ -1,5 +1,7 @@
+import time
 import tkinter as tk
 from configparser import ConfigParser
+
 from tkinter import ttk, VERTICAL
 from abc import abstractmethod, ABC
 from typing import Optional
@@ -58,8 +60,8 @@ class ScrollWrapperView(View):
 
 class TabbedView(View, ABC):
 
-    def __init__(self, master, switch_func=None):
-        super().__init__(master)
+    def __init__(self, master, switch_func=None, **kw):
+        super().__init__(master, **kw)
         self.master = master
         self.switch_func = switch_func
         ttk.Style().configure(type(self).__name__ + '.Toolbutton', anchor='center', padding=2, relief=tk.GROOVE)
@@ -99,7 +101,7 @@ class TabbedView(View, ABC):
         if self.switch_func is not None:
             self.switch_func(self.current_frame, new_fr)
         self.current_frame.forget()
-        new_fr.pack(fill=tk.BOTH, expand=True)
+        new_fr.pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         self.__buttons[new_fr].state(['selected'])
         self.current_frame = new_fr
 
@@ -352,7 +354,7 @@ class MenuBar(tk.Menu, View):
         for serial in self.master.devices:
             self.__menu_names[serial] = {M_MASTER: self.menu_sensor_calibrate,
                                          M_INDEX: 0 if self.menu_sensor_calibrate.index(tk.END) is None
-                                         else self.menu_sensor_calibrate.index(tk.END)+1}
+                                         else self.menu_sensor_calibrate.index(tk.END) + 1}
             self.add_command_item(cmd_name=serial)
 
     def update_command_or_cascade(self, name, info_updated, update_state=False):
@@ -404,14 +406,14 @@ class ProjectTreeView(ttk.Treeview, View):
         self.heading(T_MODIFIED, text=i18n.tree_view[T_COLUMNS][T_MODIFIED])
 
 
-class SensorView(TabbedView):
+class SensorListView(TabbedView):
 
-    def __init__(self, master):
-        super().__init__(master)
+    def __init__(self, master, **kw):
+        super().__init__(master, **kw)
         self.master = master
 
     def update_language(self):
-        logger.debug("update language in sensor view")
+        logger.debug("update language in sensor list view")
         if self.current_frame:
             self.current_frame.update_language()
 
@@ -419,19 +421,85 @@ class SensorView(TabbedView):
         pass
 
 
+class SensorView(View):
+
+    def __init__(self, master, **kw):
+        super().__init__(master, **kw)
+        self.master = master
+        self.sensor_list = SensorListView(self, style="SList.TFrame")
+        self._buttons = {}
+        self.button_frame = ttk.Frame(self, style="SButtons.TFrame")
+        # buttons = list of
+        self._time_sec_start = tk.StringVar()
+        self._time_sec_stop = tk.StringVar()
+        self._time_man_start = tk.StringVar()
+        self._time_man_stop = tk.StringVar()
+
+        self._sec_start: Optional[ttk.Button] = None
+        self._sec_stop: Optional[ttk.Button] = None
+        self._man_start: Optional[ttk.Button] = None
+        self._man_stop: Optional[ttk.Button] = None
+
+        '''self._buttons = {
+            PAS_START: lambda: self._man_start,
+            PAS_STOP: lambda: self._man_stop,
+            PAS_SEC_START: lambda: self._sec_start,
+            PAS_SEC_STOP: lambda: self._sec_stop
+        }'''
+
+    def set_mode(self, btn_name_list):
+        self._buttons = {}
+        for key, btn_name in btn_name_list:
+            self._buttons[btn_name][S_TEXT] = tk.StringVar()
+            self._buttons[btn_name][S_TEXT].set(i18n.sensor_buttons[btn_name])
+            self._buttons[btn_name][S_BUTTON] = ttk.Button(self.button_frame,
+                                                           textvariable=self._buttons[btn_name][S_TEXT],
+                                                           command=...)
+            self._buttons[btn_name][S_BUTTON].grid(column=key, row=0)
+        self._update_grid_weight()
+
+    def unset_mode(self):
+        self._buttons = {}
+        for widget in self.button_frame.winfo_children():
+            widget.destroy()
+
+    def set_command(self, btn_name, command):
+        logger.debug(f"scan action view set command {command} for {btn_name}")
+        if btn_name in self._buttons.keys():
+            self._buttons[btn_name][S_BUTTON].configure(command=command)
+
+    def update_language(self):
+        logger.debug("update language in sensor view")
+        self.sensor_list.update_language()
+        for btn_name in self._buttons.keys():
+            self._buttons[btn_name][S_TEXT].set(i18n.sensor_buttons[btn_name])
+
+    def create_view(self):
+        # self.sensor_list.grid(column=0, row=0, sticky='news')
+        self.sensor_list.pack(fill=tk.BOTH, expand=False)
+        self.sensor_list.create_view()
+        # create buttons for photos
+        self.button_frame.pack(side="top", fill=tk.X, expand=False)
+
+    def _update_grid_weight(self):
+        cols, _ = self.button_frame.grid_size()
+        for col in range(cols):
+            self.button_frame.columnconfigure(col, weight=1)
+
+
 class DeviceView(TabbedView):
 
     def create_view(self):
         logger.debug("create view in device view")
-        self.pack(fill=tk.BOTH, expand=True)
+        self.pack(side=tk.TOP, fill=tk.X, expand=False)
         # color = ImageView(self, lambda: self.get_image_color(), REFRESH_RATE_15FPS)
-        color = ImageView(self, lambda: self.get_image_color())
+        color = ImageView(self, lambda: self.get_image_color(), style="Image.TFrame")
         self.add(i18n.device_view_frames[D_RGB], color, D_RGB)
 
-        ir = ImageView(self, lambda: self.get_image_ir())
+        ir = ImageView(self, lambda: self.get_image_ir(), style="Image.TFrame")
         self.add(i18n.device_view_frames[D_IR], ir, D_IR)
 
-        depth = ImageView(self, lambda: self.get_image_depth())
+        depth = ImageView(self, lambda: self.get_image_depth(), style="Image.TFrame")
         self.add(i18n.device_view_frames[D_DEPTH], depth, D_DEPTH)
 
         self.refresh()
@@ -441,8 +509,8 @@ class DeviceView(TabbedView):
         self.i18n_frame_names = i18n.device_view_frames
         super().update_language()
 
-    def __init__(self, master, free_nect, serial):
-        super().__init__(master)
+    def __init__(self, master, free_nect, serial, **kw):
+        super().__init__(master, **kw)
 
         self._free_nect = free_nect
         self._serial = serial
@@ -480,8 +548,8 @@ class DeviceView(TabbedView):
         self._playing = False
         cp = self._device.getColorCameraParams()
         ip = self._device.getIrCameraParams()
-        logger.warning(str(cp.cx) + ", " + str(cp.cy) + ", " + str(cp.fx) + ", " + str(cp.fy))
-        logger.warning(str(ip.cx) + ", " + str(ip.cy) + ", " + str(ip.fx) + ", " + str(ip.fy))
+        # logger.warning(str(cp.cx) + ", " + str(cp.cy) + ", " + str(cp.fx) + ", " + str(cp.fy))
+        # logger.warning(str(ip.cx) + ", " + str(ip.cy) + ", " + str(ip.fx) + ", " + str(ip.fy))
 
     def opened(self):
         logger.debug("check if device is open in device view")
@@ -521,7 +589,7 @@ class DeviceView(TabbedView):
                     {key: (None, None, self.image_buffer[key][-1])})  # reset image buffer and keep depth map
             # get frames from sensor here
             self.frames = self._listener.waitForNewFrame()
-        self.after(int(nect_config[CONFIG][REFRESH_RATE]), self.refresh)
+        self.after(REFRESH_RATE_30FPS, self.refresh)
 
     def get_image_color(self):
         color, _, _ = self.image_buffer[IB_COLOR]
@@ -559,8 +627,8 @@ class DeviceView(TabbedView):
         # depth = open_cv.warpPerspective(depth, self._pers_rgb_ir, None,
         # borderMode=open_cv.BORDER_CONSTANT, borderValue=d_max)
         buffer = depth.astype(int)
-        logger.error(buffer == d_min)
-        logger.error(buffer[buffer == d_min])
+        # logger.error(buffer == d_min)
+        # logger.error(buffer[buffer == d_min])
         buffer[buffer == d_max], buffer[buffer == d_min] = -1, -1
         depth = depth / d_max  # normalize
         return self.__to_image(IB_DEPTH, depth, buffer)
@@ -573,7 +641,7 @@ class DeviceView(TabbedView):
         return self.image_buffer[key]
 
     def __device_list_index(self):
-        return self.master.master.devices.index(self._serial)
+        return self.master.master.master.devices.index(self._serial)
 
 
 class PlotFrame(View):
@@ -700,13 +768,16 @@ class PlotFrame(View):
 
 class ImageView(ttk.Frame):
 
-    def __init__(self, master, source, max_refresh=REFRESH_RATE_30FPS):
-        super().__init__(master)
+    def __init__(self, master, source, max_refresh=REFRESH_RATE_30FPS, **kw):
+        super().__init__(master, **kw)
 
         self.device = master
         self.canvas = tk.Canvas(self)
         self.canvas.tk_img = None
-        self.canvas.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        # self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.canvas.grid(column=0, row=0)
         self.source = source
         self.max_refresh = max_refresh
         self.refresh()
@@ -720,7 +791,7 @@ class ImageView(ttk.Frame):
                 self.canvas.tk_img = tk_img
                 self.canvas.config(width=tk_img.width(), height=tk_img.height())
                 self.canvas.create_image(0, 0, image=tk_img, anchor=tk.NW)
-        self.after(min(int(nect_config[CONFIG][REFRESH_RATE]), int(self.max_refresh)) - 1, self.refresh)
+        self.after(max(int(nect_config[CONFIG][REFRESH_RATE]), int(self.max_refresh)) - 1, self.refresh)
 
 
 class SelectedFileView(View):
