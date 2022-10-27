@@ -1,6 +1,7 @@
 import time
 import tkinter as tk
 from configparser import ConfigParser
+from pprint import pprint
 
 from tkinter import ttk, VERTICAL
 from abc import abstractmethod, ABC
@@ -425,31 +426,20 @@ class SensorView(View):
 
     def __init__(self, master, **kw):
         super().__init__(master, **kw)
+        self._title = None
         self.master = master
         self.sensor_list = SensorListView(self, style="SList.TFrame")
         self._buttons = {}
-        self.button_frame = ttk.Frame(self, style="SButtons.TFrame")
-        # buttons = list of
-        self._time_sec_start = tk.StringVar()
-        self._time_sec_stop = tk.StringVar()
-        self._time_man_start = tk.StringVar()
-        self._time_man_stop = tk.StringVar()
+        self.button_frame = ttk.Labelframe(self, style="SButtons.TLabelframe", padding=(10, 5, 10, 10), text="")
 
-        self._sec_start: Optional[ttk.Button] = None
-        self._sec_stop: Optional[ttk.Button] = None
-        self._man_start: Optional[ttk.Button] = None
-        self._man_stop: Optional[ttk.Button] = None
-
-        '''self._buttons = {
-            PAS_START: lambda: self._man_start,
-            PAS_STOP: lambda: self._man_stop,
-            PAS_SEC_START: lambda: self._sec_start,
-            PAS_SEC_STOP: lambda: self._sec_stop
-        }'''
-
-    def set_mode(self, btn_name_list):
+    def set_mode(self, btn_name_list, title=None):
         self._buttons = {}
-        for key, btn_name in btn_name_list:
+        self._title = title
+        # create buttons for photos
+        self.button_frame.pack(side="top", fill=tk.X, expand=False)
+        self.button_frame.configure(text=(i18n.sensor_view[self._title] if self._title else ""))
+        for key, btn_name in enumerate(btn_name_list):
+            self._buttons[btn_name] = {}
             self._buttons[btn_name][S_TEXT] = tk.StringVar()
             self._buttons[btn_name][S_TEXT].set(i18n.sensor_buttons[btn_name])
             self._buttons[btn_name][S_BUTTON] = ttk.Button(self.button_frame,
@@ -459,6 +449,10 @@ class SensorView(View):
         self._update_grid_weight()
 
     def unset_mode(self):
+        self._title = None
+        self.button_frame.configure(text="")
+        # create buttons for photos
+        self.button_frame.pack_forget()
         self._buttons = {}
         for widget in self.button_frame.winfo_children():
             widget.destroy()
@@ -471,6 +465,7 @@ class SensorView(View):
     def update_language(self):
         logger.debug("update language in sensor view")
         self.sensor_list.update_language()
+        self.button_frame.configure(text=(i18n.sensor_view[self._title] if self._title else ""))
         for btn_name in self._buttons.keys():
             self._buttons[btn_name][S_TEXT].set(i18n.sensor_buttons[btn_name])
 
@@ -478,8 +473,6 @@ class SensorView(View):
         # self.sensor_list.grid(column=0, row=0, sticky='news')
         self.sensor_list.pack(fill=tk.BOTH, expand=False)
         self.sensor_list.create_view()
-        # create buttons for photos
-        self.button_frame.pack(side="top", fill=tk.X, expand=False)
 
     def _update_grid_weight(self):
         cols, _ = self.button_frame.grid_size()
@@ -552,7 +545,6 @@ class DeviceView(TabbedView):
         # logger.warning(str(ip.cx) + ", " + str(ip.cy) + ", " + str(ip.fx) + ", " + str(ip.fy))
 
     def opened(self):
-        logger.debug("check if device is open in device view")
         return self._opened
 
     def play(self):
@@ -563,7 +555,6 @@ class DeviceView(TabbedView):
         return True
 
     def playing(self):
-        logger.debug("check if device is playing in device view")
         return self._playing
 
     def stop(self):

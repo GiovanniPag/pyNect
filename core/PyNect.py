@@ -109,7 +109,7 @@ class PyNect(tk.Tk):
         s.configure('Device.TFrame', background='purple')
         s.configure('Sensor.TFrame', background='yellow')
         s.configure('SList.TFrame', background='pink')
-        s.configure('SButtons.TFrame', background='orange')
+        s.configure('SButtons.TLabelframe', background="orange")
 
     # create all view classes
     def __create_gui(self):

@@ -109,19 +109,20 @@ class MenuController(Controller):
     def calibrate(self, device_to_calibrate):
         logger.debug(f"calibrate sensor: {device_to_calibrate}")
         calibrate = I18N_YES_BUTTON
-        configs = None
         if check_if_sensor_calibrated(device_to_calibrate):
             calibrate = self.ask_override_calibration()
         if calibrate == I18N_YES_BUTTON:
             configs = self.get_take_pictures_configs()
-            create_calibration_folder(device_to_calibrate)
             if configs is not None:
+                create_calibration_folder(device_to_calibrate)
                 self.take_pictures(configs)
-        if calibrate == {I18N_ONLY_CALIBRATION_BUTTON} and configs is not None:
-                calibration()
+        elif calibrate == I18N_ONLY_CALIBRATION_BUTTON:
+            # calibration()
+            return
 
     def take_pictures(self, configs):
         self.master.take_pictures(data=configs, calibration=True)
+        # set wait for end
         return
 
     def close_app(self):
@@ -204,7 +205,9 @@ class SensorController(Controller):
         logger.debug("sensor view add all device views")
         self.view.create_view()
         for serial in self.master.devices:
-            self._views.append(DeviceView(self.view.sensor_list, self.master.fn, serial=serial, borderwidth=5, relief="ridge", style="Device.TFrame"))
+            self._views.append(
+                DeviceView(self.view.sensor_list, self.master.fn, serial=serial, borderwidth=5, relief="ridge",
+                           style="Device.TFrame"))
             self._controllers.append(DeviceController(self.master))
             self._controllers[-1].bind(self._views[-1])
             self.view.sensor_list.add(serial, self._views[-1], serial)
@@ -212,8 +215,11 @@ class SensorController(Controller):
     def take_calibration_pictures(self, calib_conf):
         modality = calib_conf[I18N_MODALITY]
         frames = calib_conf[I18N_FRAMES]
-
-        return
+        if modality == TK_MANUAL:
+            self.view.set_mode([S_MANUAL_TAKE, S_STOP], S_CALIBRATION)
+            self.view.set_command(btn_name=S_STOP, command=lambda: self.view.unset_mode())
+        elif modality == TK_TIMED:
+            self.view.set_mode([S_TIME_START, S_STOP], S_CALIBRATION)
 
     def take_pictures_manual(self, number, modality=TK_MANUAL):
         return

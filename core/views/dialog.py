@@ -108,20 +108,19 @@ class DialogTakePictureOptions(Dialog):
         self.automatic_radio = i18n.tk_options_dialog[I18N_AUTOMATIC]
         self.automatic_tip = i18n.tk_options_dialog[I18N_AUTOMATIC_TIP]
         self.frames_label = i18n.tk_options_dialog[I18N_FRAMES]
-        self.response_value = None
         self.mode_var = tk.StringVar()
-        self.mode_var.set(I18N_MANUAL)
+        self._abort = False
+        self.mode_var.set(TK_MANUAL)
         self.frames_var = tk.IntVar()
         self.frames_var.set(20)
 
     def ask_value(self):
         logger.debug(f"Calibrate sensor Dialog ask value: {self.mode_var.get()}, {self.frames_var.get()}")
-        self.response_value = {I18N_MODALITY: self.mode_var.get(), I18N_FRAMES: self.frames_var.get()}
-        return self.response_value
+        return None if self._abort else {I18N_MODALITY: self.mode_var.get(), I18N_FRAMES: self.frames_var.get()}
 
     def dismiss_method(self):
         logger.debug("Calibrate sensor Dialog dismiss method")
-        self.response_value = None
+        self._abort = True
 
     def create_view(self):
         logger.debug("Calibrate sensor Dialog create view method")
@@ -134,9 +133,9 @@ class DialogTakePictureOptions(Dialog):
         ttk.Label(self, text=self.modality_label, font="bold") \
             .grid(row=0, column=1, columnspan=2, pady=(7, 7), padx=(7, 7), sticky="w")
         # radio buttons modality
-        r_manual = ttk.Radiobutton(self, text=self.manual_radio, variable=self.mode_var, value=I18N_MANUAL)
+        r_manual = ttk.Radiobutton(self, text=self.manual_radio, variable=self.mode_var, value=TK_MANUAL)
         r_manual.grid(row=1, column=1, columnspan=1, pady=(7, 7), padx=(7, 7), sticky="we")
-        r_auto = ttk.Radiobutton(self, text=self.automatic_radio, variable=self.mode_var, value=I18N_AUTOMATIC)
+        r_auto = ttk.Radiobutton(self, text=self.automatic_radio, variable=self.mode_var, value=TK_TIMED)
         r_auto.grid(row=1, column=2, columnspan=1, pady=(7, 7), padx=(7, 7), sticky="we")
         # radio buttons tip
         ToolTip(r_manual, text=self.manual_tip)

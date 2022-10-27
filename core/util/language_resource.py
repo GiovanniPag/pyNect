@@ -72,6 +72,7 @@ class I18N:
                 # dialog buttons
                 self.dialog_buttons = data['dialog']['buttons']
                 # sensor buttons
+                self.sensor_view = data['sensor_view']
                 self.sensor_buttons = data['sensor_view']['buttons']
                 # project exist error dialog
                 self.project_message = data['dialog']["project_message"]

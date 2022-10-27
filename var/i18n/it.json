@@ -230,7 +230,12 @@
     "no_project": "Nessun progetto selezionato"
   },
   "sensor_view": {
+    "calibration": "Calibrazione",
     "buttons": {
+      "frames_info": "Frame mancanti:",
+      "time_start": "Avvia cattura a tempo",
+      "stop": "Interrompi",
+      "manual_take": "Scatta foto"
     }
   },
   "project_actions": {

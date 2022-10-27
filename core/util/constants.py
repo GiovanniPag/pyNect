@@ -26,7 +26,6 @@ PROJECTS_FOLDER_DEFAULT = "projects/"
 GUIDE_FILE_DEFAULT = "var/guide.pdf"
 CALIBRATION_PATH_DEFAULT = "var/.calibration"
 
-
 # project config file items
 P_NAME = "name"
 P_PATH = "path"
@@ -185,6 +184,12 @@ PAS_SEC_STOP = "time_stop_sec"
 # sensor builder kit
 S_BUTTON = "button"
 S_TEXT = "text"
+# sensor view
+S_CALIBRATION = "calibration"
+S_FRAMES_INFO = "frames_info"
+S_TIME_START = "time_start"
+S_STOP = "stop"
+S_MANUAL_TAKE = "manual_take"
 
 # take pictures constants
 TK_MANUAL = "manual"
