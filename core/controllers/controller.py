@@ -233,88 +233,12 @@ class SensorController(Controller):
         self.current_state = S_STATE_NONE
         self.view.unset_mode()
 
-    def take_picture(self):
-        import cv2 as open_cv
-        import numpy as np
-        from pylibfreenect2 import SyncMultiFrameListener, FrameType, Freenect2, FrameMap
-
-        import const
-        import time
-
-        try:
-            from pylibfreenect2 import OpenGLPacketPipeline as Pipeline
-        except ImportError as error:
-            try:
-                from pylibfreenect2 import OpenCLPacketPipeline as Pipeline
-            except ImportError as error:
-                from pylibfreenect2 import CpuPacketPipeline as Pipeline
-        pipeline = Pipeline()
-
-        def ir_frame_to_jpg(ir_frame_to_trans):
-            ir_frame_to_trans = ir_frame_to_trans.asarray(dtype=np.float32)
-            ir_frame_to_trans = ir_frame_to_trans.reshape(const.ir_image_size)
-            ir_frame_to_trans = np.uint8(ir_frame_to_trans / 256)
-
-            jpg_ir_frame_ = np.zeros((const.ir_image_size[0], const.ir_image_size[1], 3), np.uint8)
-            jpg_ir_frame_[:, :, 0] = ir_frame_to_trans
-            jpg_ir_frame_[:, :, 1] = ir_frame_to_trans
-            jpg_ir_frame_[:, :, 2] = ir_frame_to_trans
-            return jpg_ir_frame_
-
-        frames = FrameMap()
-        fn = Freenect2()
-        listener = SyncMultiFrameListener(FrameType.Color | FrameType.Ir | FrameType.Depth)
-        serial = fn.getDeviceSerialNumber(0)
-        device = fn.openDevice(serial, pipeline=pipeline)
-        device.setColorFrameListener(listener)
-        device.setIrAndDepthFrameListener(listener)
-        device.start()
-
-        i = 0
-
-        redAlert = np.zeros((const.ir_image_size[0], const.ir_image_size[1], 3), np.uint8)
-        redAlert[:, :, 2] = 255
-
-        while 1:
-            my_time = time.time()
-            while open_cv.waitKey(1) != 27:  # wait ESC press
-                listener.release(frames)
-                frames = listener.waitForNewFrame()
-                open_cv.imshow('IR', ir_frame_to_jpg(frames["ir"]))
-            print("first")
-            # save data
-            open_cv.imshow('IR', redAlert)
-            open_cv.waitKey(1)
-            print("red")
-            listener.release(frames)
-            frames = listener.waitForNewFrame()
-            ir_frame = frames["ir"]
-            jpg_ir_frame = ir_frame_to_jpg(ir_frame)
-            irFilePath = const.irFolder / (str(i) + '.jpg')
-            open_cv.imwrite(str(irFilePath.resolve()), jpg_ir_frame)
-
-            colorFrame = frames["color"]
-            colorFrame = colorFrame.asarray(dtype=np.uint8)
-            colorFrame = colorFrame.reshape(const.rgb_image_size[0], const.rgb_image_size[1], 4)
-            rgbFilePath = const.rgbFolder / (str(i) + '.jpg')
-            open_cv.imwrite(str(rgbFilePath.resolve()), colorFrame)
-
-            for j in range(0, const.numberOfDepthFramesForDepthCalibration):
-                time.sleep(0.03)
-                depthFilePath = const.depthFolder / (str(i) + '_' + str(j) + '.npy')
-                depthFrame = frames["depth"]
-                depthFrame = depthFrame.asarray(dtype=np.float32)
-                depthFrame = depthFrame.reshape(const.ir_image_size)
-                np.save(str(depthFilePath.resolve()), depthFrame)
-
-            i = i + 1
-
     def take_manual_picture(self):
         if self.current_state == S_STATE_CALIBRATION:
-            # logic to take picture
-            self.master.take_picture()
-            # reduce frames
             if isinstance(self.missing_calibration_frames, int):
+                # logic to take picture
+                self.master.take_picture()
+                # reduce frames
                 self.missing_calibration_frames = self.missing_calibration_frames - 1
                 self.view.update_frame_count(self.missing_calibration_frames)
                 # last picture?

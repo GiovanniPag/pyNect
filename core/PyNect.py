@@ -193,7 +193,31 @@ class PyNect(tk.Tk):
         logger.debug(f"select file event {event} data {path}")
         self.selected_controller.update_view(path)
 
+    def ir_frame_to_jpg(self, ir_frame_to_trans):
+        ir_frame_to_trans = ir_frame_to_trans.asarray(dtype=np.float32)
+        ir_frame_to_trans = ir_frame_to_trans.reshape(const.ir_image_size)
+        ir_frame_to_trans = np.uint8(ir_frame_to_trans / 256)
+        jpg_ir_frame_ = np.zeros((const.ir_image_size[0], const.ir_image_size[1], 3), np.uint8)
+        jpg_ir_frame_[:, :, 0] = ir_frame_to_trans
+        jpg_ir_frame_[:, :, 1] = ir_frame_to_trans
+        jpg_ir_frame_[:, :, 2] = ir_frame_to_trans
+        return jpg_ir_frame_
+
     def take_picture(self):
+        i = 0
+        # save data
+        listener.release(frames)
+        frames = listener.waitForNewFrame()
+        ir_frame = frames["ir"]
+        jpg_ir_frame = ir_frame_to_jpg(ir_frame)
+        irFilePath = const.irFolder / (str(i) + '.jpg')
+        open_cv.imwrite(str(irFilePath.resolve()), jpg_ir_frame)
+        colorFrame = frames["color"]
+        colorFrame = colorFrame.asarray(dtype=np.uint8)
+        colorFrame = colorFrame.reshape(const.rgb_image_size[0], const.rgb_image_size[1], 4)
+        rgbFilePath = const.rgbFolder / (str(i) + '.jpg')
+        open_cv.imwrite(str(rgbFilePath.resolve()), colorFrame)
+        i = i + 1
 
     def take_pictures(self, data, calibration=False):
         if calibration:
