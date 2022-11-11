@@ -183,13 +183,19 @@ PAS_SEC_STOP = "time_stop_sec"
 
 # sensor builder kit
 S_BUTTON = "button"
+S_LABEL = "label"
 S_TEXT = "text"
 # sensor view
 S_CALIBRATION = "calibration"
 S_FRAMES_INFO = "frames_info"
+S_FRAMES_INFO_COUNT = "frames_count"
 S_TIME_START = "time_start"
 S_STOP = "stop"
 S_MANUAL_TAKE = "manual_take"
+# sensor state
+S_STATE_CALIBRATION = "calibration"
+S_STATE_NONE = "none"
+S_STATE_CAPTURING = "capturing"
 
 # take pictures constants
 TK_MANUAL = "manual"

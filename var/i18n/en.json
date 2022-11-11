@@ -226,8 +226,10 @@
   },
   "sensor_view": {
     "calibration": "Calibration",
+    "labels": {
+      "frames_info": "Missing frames:"
+    },
     "buttons": {
-      "frames_info": "Missing frames:",
       "time_start": "Start timed capture",
       "stop": "Abort",
       "manual_take": "Take photo"

@@ -108,7 +108,11 @@ class TabbedView(View, ABC):
 
     def update_language(self):
         logger.debug(f"update language in tabbed view")
+        self.__width = 0
         for key, item in self.__buttons_name.items():
+            if len(self.i18n_frame_names[key]) > self.__width:
+                self.__width = len(self.i18n_frame_names[key])
+                [item.config(width=self.__width) for key, item in self.__buttons.items()]
             item.configure(text=self.i18n_frame_names[key])
 
 
@@ -430,14 +434,34 @@ class SensorView(View):
         self.master = master
         self.sensor_list = SensorListView(self, style="SList.TFrame")
         self._buttons = {}
+        self._widget = {}
         self.button_frame = ttk.Labelframe(self, style="SButtons.TLabelframe", padding=(10, 5, 10, 10), text="")
 
-    def set_mode(self, btn_name_list, title=None):
+    def set_mode(self, btn_name_list, title=None, **kw):
+        logger.debug(f"set mode for {title}")
         self._buttons = {}
         self._title = title
         # create buttons for photos
+        buttons_row = [0] * len(btn_name_list)
         self.button_frame.pack(side="top", fill=tk.X, expand=False)
-        self.button_frame.configure(text=(i18n.sensor_view[self._title] if self._title else ""))
+        if title == S_CALIBRATION:
+            self._widget[S_FRAMES_INFO] = {}
+            self._widget[S_FRAMES_INFO][S_TEXT] = tk.StringVar()
+            self._widget[S_FRAMES_INFO][S_TEXT].set(i18n.sensor_labels[S_FRAMES_INFO])
+            self._widget[S_FRAMES_INFO][S_LABEL] = ttk.Label(self.button_frame,
+                                                             textvariable=self._widget[S_FRAMES_INFO][S_TEXT])
+            self._widget[S_FRAMES_INFO][S_LABEL].grid(column=0, row=0, columnspan=(
+                len(btn_name_list) - 1 if len(btn_name_list) > 1 else 1), sticky=(tk.W, tk.E))
+            self._widget[S_FRAMES_INFO_COUNT] = {}
+            self._widget[S_FRAMES_INFO_COUNT][S_TEXT] = tk.StringVar()
+            self._widget[S_FRAMES_INFO_COUNT][S_TEXT].set(kw.get("frames"))
+            self._widget[S_FRAMES_INFO_COUNT][S_LABEL] = ttk.Label(self.button_frame,
+                                                                   textvariable=self._widget[S_FRAMES_INFO_COUNT][
+                                                                       S_TEXT])
+            self._widget[S_FRAMES_INFO_COUNT][S_LABEL].grid(column=(
+                len(btn_name_list) if len(btn_name_list) > 1 else 1), row=0, sticky=(tk.W, tk.E))
+            buttons_row = [i + 1 for i in buttons_row]
+
         for key, btn_name in enumerate(btn_name_list):
             self._buttons[btn_name] = {}
             self._buttons[btn_name][S_TEXT] = tk.StringVar()
@@ -445,20 +469,22 @@ class SensorView(View):
             self._buttons[btn_name][S_BUTTON] = ttk.Button(self.button_frame,
                                                            textvariable=self._buttons[btn_name][S_TEXT],
                                                            command=...)
-            self._buttons[btn_name][S_BUTTON].grid(column=key, row=0)
+            self._buttons[btn_name][S_BUTTON].grid(column=key, row=buttons_row[key])
+        self.button_frame.configure(text=(i18n.sensor_view[self._title] if self._title else ""))
         self._update_grid_weight()
 
     def unset_mode(self):
+        logger.debug(f"unset mode {self._title}")
         self._title = None
-        self.button_frame.configure(text="")
-        # create buttons for photos
-        self.button_frame.pack_forget()
         self._buttons = {}
+        self._widget = {}
         for widget in self.button_frame.winfo_children():
             widget.destroy()
+        self.button_frame.configure(text="")
+        self.button_frame.pack_forget()
 
     def set_command(self, btn_name, command):
-        logger.debug(f"scan action view set command {command} for {btn_name}")
+        logger.debug(f"sensor view set command {command} for {btn_name}")
         if btn_name in self._buttons.keys():
             self._buttons[btn_name][S_BUTTON].configure(command=command)
 
@@ -468,11 +494,17 @@ class SensorView(View):
         self.button_frame.configure(text=(i18n.sensor_view[self._title] if self._title else ""))
         for btn_name in self._buttons.keys():
             self._buttons[btn_name][S_TEXT].set(i18n.sensor_buttons[btn_name])
+        for wdt_name in self._widget.keys():
+            if wdt_name not in [S_FRAMES_INFO_COUNT]:
+                self._widget[wdt_name][S_TEXT].set(i18n.sensor_labels[wdt_name])
 
     def create_view(self):
         # self.sensor_list.grid(column=0, row=0, sticky='news')
         self.sensor_list.pack(fill=tk.BOTH, expand=False)
         self.sensor_list.create_view()
+
+    def update_frame_count(self,new_number):
+        self._widget[S_FRAMES_INFO_COUNT][S_TEXT].set(new_number)
 
     def _update_grid_weight(self):
         cols, _ = self.button_frame.grid_size()

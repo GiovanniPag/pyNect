@@ -193,6 +193,8 @@ class PyNect(tk.Tk):
         logger.debug(f"select file event {event} data {path}")
         self.selected_controller.update_view(path)
 
+    def take_picture(self):
+
     def take_pictures(self, data, calibration=False):
         if calibration:
             self.sensor_controller.take_calibration_pictures(data)

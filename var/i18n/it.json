@@ -231,8 +231,10 @@
   },
   "sensor_view": {
     "calibration": "Calibrazione",
+    "labels": {
+      "frames_info": "Frame mancanti:"
+    },
     "buttons": {
-      "frames_info": "Frame mancanti:",
       "time_start": "Avvia cattura a tempo",
       "stop": "Interrompi",
       "manual_take": "Scatta foto"
