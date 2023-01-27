@@ -1,10 +1,14 @@
 from pathlib import Path
 
 # config file path
+import numpy as np
+
 CONFIG_FILE = Path.cwd() / "var" / ".conf" / "pynect.ini"
 # config file sections
 OPEN_PROJECTS = "open projects"
 CONFIG = "config"
+CALIBRATION = "calibration"
+FRAMES = "frames"
 # config file config section items
 LANGUAGE = "language"
 I18N_PATH = "i18n_path"
@@ -25,6 +29,20 @@ LOG_FOLDER_DEFAULT = "var/.logs/"
 PROJECTS_FOLDER_DEFAULT = "projects/"
 GUIDE_FILE_DEFAULT = "var/guide.pdf"
 CALIBRATION_PATH_DEFAULT = "var/.calibration"
+# config file calibration section items
+SQUARE_SIZE = "square_size"
+PATTERN_SIZE = "pattern_size"
+# config file calibration section default values
+SQUARE_SIZE_DEFAULT = 0.03
+PATTERN_SIZE_DEFAULT = (6, 8)
+# config file config section items
+IR_IMAGE_SIZE = "ir_image_size"
+RGB_IMAGE_SIZE = "rgb_image_size"
+INDEX_FOR_BACKGROUND = "indexForBackground"
+# config file config section default values
+IR_IMAGE_SIZE_DEFAULT = (512, 424)
+RGB_IMAGE_SIZE_DEFAULT = (1920, 1080)
+INDEX_FOR_BACKGROUND_DEFAULT = 255
 
 # project config file items
 P_NAME = "name"
@@ -49,8 +67,11 @@ F_FINAL = "final"
 # calibration folders
 F_RESULTS = "calibration_results"
 F_RGB = "RGB"
-F_Depth = "Depth"
 F_IR = "IR"
+# calibration files
+CF_RGB = "rgb"
+CF_STEREO = "rgb_to_ir"
+CF_IR = "ir"
 
 # tk icons
 BASENAME_ICON = "::tk::icons::"
@@ -214,3 +235,8 @@ IB_COLOR = "color"
 REFRESH_RATE_10FPS = "100"
 REFRESH_RATE_15FPS = "66"
 REFRESH_RATE_30FPS = "33"
+
+# numbers for formulas
+IR_NORMALIZATOR = 65535
+NP_UINT8_MAX = np.iinfo(np.uint8).max
+

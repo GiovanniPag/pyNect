@@ -1,3 +1,4 @@
+import threading
 import time
 import tkinter as tk
 from configparser import ConfigParser
@@ -15,7 +16,7 @@ import PIL.ImageTk
 
 from core.controllers import Controller
 from core.util import config
-from core.util.config import logger, nect_config
+from core.util.config import logger, nect_config, IR_IMAGE_SIZE_PARSED, RGB_IMAGE_SIZE_HALVED, RGB_IMAGE_SIZE_PARSED
 from core.util.constants import *
 from core.util.language_resource import i18n
 from core.views import View, AutoScrollbar, AutoWrapMessage, ScrollFrame, DiscreteStep, check_num
@@ -31,6 +32,7 @@ except ImportError as error:
         logger.exception("OpenCLPacketPipeline import error", error)
         from pylibfreenect2 import CpuPacketPipeline as Pipeline
 pipeline = Pipeline()
+logger.debug("import pipeline module successfully")
 logger.info(f"Packet pipeline: {type(pipeline).__name__}")
 
 
@@ -77,6 +79,9 @@ class TabbedView(View, ABC):
         self.__width = 0
         self.i18n_frame_names = {}
 
+    def selected_frame(self):
+        return self.current_frame
+
     def add(self, title, frame, b_id):
         logger.debug(f"add frame: {frame} to tabbed view")
         b = ttk.Radiobutton(self.__options_frame, text=title, style=type(self).__name__ + '.Toolbutton',
@@ -94,6 +99,9 @@ class TabbedView(View, ABC):
             self.__width = len(title)
         [item.config(width=self.__width) for key, item in self.__buttons.items()]
         return b
+
+    def select_by_id(self, b_id):
+        self.__buttons_name[b_id].invoke()
 
     def select(self, new_fr):
         logger.debug(f"select new frame {new_fr} in tabbed view")
@@ -226,11 +234,11 @@ class MenuBar(tk.Menu, View):
             },
             M_CALIBRATE: {
                 M_MASTER: self.menu_sensor,
-                M_INDEX: 1
+                M_INDEX: 0
             },
             M_FPS: {
                 M_MASTER: self.menu_sensor,
-                M_INDEX: 0
+                M_INDEX: 1
             },
             M_10FPS: {
                 M_MASTER: self.menu_sensor_fps,
@@ -437,6 +445,15 @@ class SensorView(View):
         self._widget = {}
         self.button_frame = ttk.Labelframe(self, style="SButtons.TLabelframe", padding=(10, 5, 10, 10), text="")
 
+    def selected_device_serial(self):
+        return self.sensor_list.selected_frame().serial()
+
+    def selected_device(self) -> 'DeviceView':
+        return self.sensor_list.selected_frame()
+
+    def select(self, serial):
+        self.sensor_list.select_by_id(serial)
+
     def set_mode(self, btn_name_list, title=None, **kw):
         logger.debug(f"set mode for {title}")
         self._buttons = {}
@@ -503,7 +520,7 @@ class SensorView(View):
         self.sensor_list.pack(fill=tk.BOTH, expand=False)
         self.sensor_list.create_view()
 
-    def update_frame_count(self,new_number):
+    def update_frame_count(self, new_number):
         self._widget[S_FRAMES_INFO_COUNT][S_TEXT].set(new_number)
 
     def _update_grid_weight(self):
@@ -518,7 +535,8 @@ class DeviceView(TabbedView):
         logger.debug("create view in device view")
         self.pack(side=tk.TOP, fill=tk.X, expand=False)
         # color = ImageView(self, lambda: self.get_image_color(), REFRESH_RATE_15FPS)
-        color = ImageView(self, lambda: self.get_image_color(), style="Image.TFrame")
+        color = ImageView(self, lambda: self.get_image_color(), resize={"value": True, "size": RGB_IMAGE_SIZE_HALVED},
+                          style="Image.TFrame")
         self.add(i18n.device_view_frames[D_RGB], color, D_RGB)
 
         ir = ImageView(self, lambda: self.get_image_ir(), style="Image.TFrame")
@@ -554,6 +572,13 @@ class DeviceView(TabbedView):
 
         self.frames = FrameMap()
         self.image_buffer = {IB_COLOR: (None, None, None), IB_IR: (None, None, None), IB_DEPTH: (None, None, None)}
+        self.lock = threading.RLock()
+
+    def get_frame(self):
+        with self.lock:
+            return {IB_COLOR: self.frames[IB_COLOR].asarray(dtype=np.uint8),
+                    IB_IR: self.frames[IB_IR].asarray(dtype=np.float32),
+                    IB_DEPTH: self.frames[IB_DEPTH].asarray(dtype=np.float32)}
 
     def open(self):
         logger.debug("open device, start listener")
@@ -606,12 +631,13 @@ class DeviceView(TabbedView):
 
     def refresh(self):
         if self._playing:
-            self._listener.release(self.frames)
-            for key in self.image_buffer:
-                self.image_buffer.update(
-                    {key: (None, None, self.image_buffer[key][-1])})  # reset image buffer and keep depth map
-            # get frames from sensor here
-            self.frames = self._listener.waitForNewFrame()
+            with self.lock:
+                self._listener.release(self.frames)
+                for key in self.image_buffer:
+                    self.image_buffer.update(
+                     {key: (None, None, self.image_buffer[key][2])})  # reset image buffer and keep depth map
+                # get frames from sensor here
+                self.frames = self._listener.waitForNewFrame()
         self.after(REFRESH_RATE_30FPS, self.refresh)
 
     def get_image_color(self):
@@ -621,7 +647,8 @@ class DeviceView(TabbedView):
         color = self.frames[IB_COLOR]
         color = color.asarray(dtype=np.uint8)
         color = np.flip(color, axis=(1,))
-        color = open_cv.resize(color, (1920 // 2, 1080 // 2))
+        color = open_cv.resize(color, RGB_IMAGE_SIZE_PARSED)
+        # todo: no right color on save img
         color = open_cv.cvtColor(color, open_cv.COLOR_BGRA2RGBA)
         return self.__to_image(IB_COLOR, color)
 
@@ -631,12 +658,11 @@ class DeviceView(TabbedView):
             return self.image_buffer[IB_IR]
         ir = self.frames[IB_IR]
         ir = ir.asarray(dtype=np.float32)
+        ir = open_cv.resize(ir, IR_IMAGE_SIZE_PARSED)
         ir = np.flip(ir, axis=(1,))
-        d_size = (1920 // 2, 1080 // 2)
-        ir = open_cv.resize(ir, d_size)
         # ir = open_cv.warpPerspective(ir, self._pers_rgb_ir, None,
         # borderMode=open_cv.BORDER_CONSTANT, borderValue=65535)
-        ir = ir / 65535  # normalize
+        ir = ir / IR_NORMALIZATOR  # normalize
         return self.__to_image(IB_IR, ir)
 
     def get_image_depth(self, d_min=0, d_max=5000):
@@ -645,8 +671,8 @@ class DeviceView(TabbedView):
             return self.image_buffer[IB_DEPTH]
         depth = self.frames[IB_DEPTH]
         depth = depth.asarray(dtype=np.float32)
+        depth = open_cv.resize(depth, IR_IMAGE_SIZE_PARSED)
         depth = np.flip(depth, axis=(1,))
-        depth = open_cv.resize(depth, (1920 // 2, 1080 // 2))
         # depth = open_cv.warpPerspective(depth, self._pers_rgb_ir, None,
         # borderMode=open_cv.BORDER_CONSTANT, borderValue=d_max)
         buffer = depth.astype(int)
@@ -658,13 +684,49 @@ class DeviceView(TabbedView):
 
     def __to_image(self, key, array, arg=None):
         if array.dtype == np.float32 and len(array.shape) == 2:  # ir or depth, range between 0 and 1
-            array = np.asarray(array * np.iinfo(np.uint8).max, dtype=np.uint8)
+            array = np.asarray(array * NP_UINT8_MAX, dtype=np.uint8)
         img = PIL.Image.fromarray(array)
         self.image_buffer[key] = (img, array, arg)
         return self.image_buffer[key]
 
+    def serial(self):
+        return self._serial
+
     def __device_list_index(self):
         return self.master.master.master.devices.index(self._serial)
+
+
+class ImageView(ttk.Frame):
+
+    def __init__(self, master, source, max_refresh=REFRESH_RATE_30FPS, resize=None, **kw):
+        super().__init__(master, **kw)
+
+        if resize is None:
+            self.resize = {"value": False}
+        else:
+            self.resize = resize
+        self.device = master
+        self.canvas = tk.Canvas(self)
+        self.canvas.tk_img = None
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.canvas.grid(column=0, row=0)
+        self.source = source
+        self.max_refresh = max_refresh
+        self.refresh()
+
+    def refresh(self):
+        if self.winfo_viewable() and self.device.playing():
+            img, arr, arg = self.source()
+            if img is not None:
+                if self.resize["value"]:
+                    img = PIL.Image.fromarray(open_cv.resize(arr, self.resize["size"]))
+                self.canvas.img = img
+                tk_img = PIL.ImageTk.PhotoImage(image=img)
+                self.canvas.tk_img = tk_img
+                self.canvas.config(width=tk_img.width(), height=tk_img.height())
+                self.canvas.create_image(0, 0, image=tk_img, anchor=tk.NW)
+        self.after(max(int(nect_config[CONFIG][REFRESH_RATE]), int(self.max_refresh)) - 1, self.refresh)
 
 
 class PlotFrame(View):
@@ -787,34 +849,6 @@ class PlotFrame(View):
             return
 
         self.after(max(REFRESH_RATE, d), self.__refresh, False)
-
-
-class ImageView(ttk.Frame):
-
-    def __init__(self, master, source, max_refresh=REFRESH_RATE_30FPS, **kw):
-        super().__init__(master, **kw)
-
-        self.device = master
-        self.canvas = tk.Canvas(self)
-        self.canvas.tk_img = None
-        # self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        self.rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-        self.canvas.grid(column=0, row=0)
-        self.source = source
-        self.max_refresh = max_refresh
-        self.refresh()
-
-    def refresh(self):
-        if self.winfo_viewable() and self.device.playing():
-            img, arr, arg = self.source()
-            if img is not None:
-                self.canvas.img = img
-                tk_img = PIL.ImageTk.PhotoImage(image=img)
-                self.canvas.tk_img = tk_img
-                self.canvas.config(width=tk_img.width(), height=tk_img.height())
-                self.canvas.create_image(0, 0, image=tk_img, anchor=tk.NW)
-        self.after(max(int(nect_config[CONFIG][REFRESH_RATE]), int(self.max_refresh)) - 1, self.refresh)
 
 
 class SelectedFileView(View):

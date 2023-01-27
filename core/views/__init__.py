@@ -7,7 +7,7 @@ from enum import Enum, auto
 from math import floor
 from pathlib import Path
 
-from core import logger, CONFIG, CALIBRATION_PATH, F_RGB, F_Depth, F_IR, F_RESULTS
+from core import logger, CONFIG, CALIBRATION_PATH, F_RGB, F_IR, F_RESULTS
 from core.util import nect_config, check_if_folder_exist
 
 
@@ -43,7 +43,7 @@ def sizeof_fmt(num, suffix="B"):
 def check_if_sensor_calibrated(device_serial: str):
     calibration_folder = Path(nect_config[CONFIG][CALIBRATION_PATH]) / device_serial
     check = check_if_folder_exist(calibration_folder) and check_if_folder_exist(
-        calibration_folder / F_RGB) and check_if_folder_exist(calibration_folder / F_Depth) and check_if_folder_exist(
+        calibration_folder / F_RGB) and check_if_folder_exist(
         calibration_folder / F_IR) and check_if_folder_exist(calibration_folder / F_RESULTS)
     return check
 

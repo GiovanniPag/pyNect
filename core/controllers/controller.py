@@ -1,12 +1,15 @@
 from datetime import datetime, timezone
-
+import cv2 as open_cv
 from tkinter import filedialog
+
+import numpy as np
 
 from core import open_message_dialog, open_error_dialog
 from core.controllers import Controller
-from core.models import store_open_project, add_to_open_projects, create_project_folder, create_calibration_folder
+from core.models import store_open_project, add_to_open_projects, create_project_folder, create_calibration_folder, \
+    restore_calibration_backup, remove_calibration_backup
 from core.util import open_guide, open_log_folder, check_if_folder_exist, check_if_is_project, is_int
-from core.util.config import logger, nect_config, change_fps
+from core.util.config import logger, nect_config, change_fps, RGB_IMAGE_SIZE_PARSED, IR_IMAGE_SIZE_PARSED
 from core.util.constants import *
 from core.util.language_resource import i18n
 from core.views import sizeof_fmt, check_if_sensor_calibrated
@@ -114,16 +117,14 @@ class MenuController(Controller):
         if calibrate == I18N_YES_BUTTON:
             configs = self.get_take_pictures_configs()
             if configs is not None:
-                create_calibration_folder(device_to_calibrate)
-                self.take_pictures(configs)
+                # unset mode, switch view
+                self.master.switch_sensor(device_to_calibrate)
+                # create folder and start taking pictures
+                create_calibration_folder(device_to_calibrate, reset=True, backup=True)
+                self.master.take_pictures(data=configs, calibration=True)
         elif calibrate == I18N_ONLY_CALIBRATION_BUTTON:
             # calibration()
             return
-
-    def take_pictures(self, configs):
-        self.master.take_pictures(data=configs, calibration=True)
-        # set wait for end
-        return
 
     def close_app(self):
         logger.debug("close app")
@@ -222,29 +223,50 @@ class SensorController(Controller):
             self.current_state = S_STATE_CALIBRATION
             self.view.set_mode(btn_name_list=[S_MANUAL_TAKE, S_STOP], title=S_CALIBRATION, frames=frames)
             self.view.set_command(btn_name=S_MANUAL_TAKE, command=lambda: self.take_manual_picture())
-            self.view.set_command(btn_name=S_STOP, command=lambda: self.unset_mode())
+            self.view.set_command(btn_name=S_STOP, command=lambda: self.unset_mode(True))
         elif modality == TK_TIMED:
             self.view.set_mode(btn_name_list=[S_TIME_START, S_STOP], title=S_CALIBRATION, frames=frames)
             # self.view.set_command(btn_name=S_TIME_START, command=self.start_timed_capture())
             self.view.set_command(btn_name=S_STOP, command=lambda: self.unset_mode())
 
-    def unset_mode(self):
+    def unset_mode(self, restore=False):
+        if restore and self.current_state == S_STATE_CALIBRATION:
+            restore_calibration_backup(self.view.sensor_list.selected_frame().serial())
         self.missing_calibration_frames = None
         self.current_state = S_STATE_NONE
         self.view.unset_mode()
 
+    def take_picture(self, name="_", calibration=False):
+        if calibration:
+            # get frames asarray
+            frame = self.view.selected_device().get_frame()
+            # save
+            calibration_path = Path(nect_config[CONFIG][CALIBRATION_PATH])
+            rgb_file_path = calibration_path / self.view.selected_device_serial() / F_RGB / (str(name) + '.jpg')
+            arr = open_cv.resize(np.flip(frame[IB_COLOR], axis=(1,)), RGB_IMAGE_SIZE_PARSED)
+            open_cv.imwrite(str(rgb_file_path.resolve()), arr)
+            ir_file_path = calibration_path / self.view.selected_device_serial() / F_IR / (str(name) + '.jpg')
+            arr = np.asarray(
+                open_cv.resize(np.flip(frame[IB_IR], axis=(1,)), IR_IMAGE_SIZE_PARSED) / IR_NORMALIZATOR * NP_UINT8_MAX,
+                dtype=np.uint8)
+            open_cv.imwrite(str(ir_file_path.resolve()), arr)
+        else:
+            print("foto")
+
     def take_manual_picture(self):
         if self.current_state == S_STATE_CALIBRATION:
             if isinstance(self.missing_calibration_frames, int):
-                # logic to take picture
-                self.master.take_picture()
                 # reduce frames
                 self.missing_calibration_frames = self.missing_calibration_frames - 1
                 self.view.update_frame_count(self.missing_calibration_frames)
+                # logic to take picture
+                self.take_picture(name=str(self.missing_calibration_frames), calibration=True)
+
                 # last picture?
                 if self.missing_calibration_frames <= 0:
                     # yes start calibration, unset mode
-                    self.unset_mode()
+                    self.unset_mode(restore=False)
+                    remove_calibration_backup(self.view.sensor_list.selected_frame().serial())
                     self.calibration()
                 # no wait for next
             else:
@@ -254,9 +276,75 @@ class SensorController(Controller):
         else:
             self.unset_mode()
 
-    def take_pictures_timed(self, frames_to_capture, time_between=1):
+    def calibration(self):
+        if isRGB:
+            img_names = const.rgbFolder.glob('*.jpg')
+            CAMERA_PATH = str(const.rgbCameraIntrinsic.resolve())
+        else:
+            img_names = const.irFolder.glob('*.jpg')
+            CAMERA_PATH = str(const.irCameraIntrinsic.resolve())
+        # create object points
+        pattern_points = np.zeros((np.prod(const.pattern_size), 3), np.float32)
+        pattern_points[:, :2] = np.indices(const.pattern_size).T.reshape(-1, 2)
+        pattern_points *= const.square_size
+        # print(pattern_points)
 
-        return
+        obj_points = []
+        img_points = []
+        h, w = 0, 0
+        for fn in img_names:
+            print(f'processing {fn}...')
+            img = cv2.imread(str(fn.resolve()), 0)
+            if img is None:
+                print("Failed to load", fn)
+                continue
+
+            h, w = img.shape[:2]
+            found, corners = cv2.findChessboardCorners(img, const.pattern_size, flags=cv2.CALIB_CB_ADAPTIVE_THRESH)
+            if found:
+                cv2.cornerSubPix(img, corners, (5, 5), (-1, -1),
+                                 (cv2.TERM_CRITERIA_EPS +
+                                  cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001))
+                # Draw and display the corners
+                cv2.drawChessboardCorners(img, (6, 8), corners, found)
+                cv2.imshow('img', img)
+                cv2.waitKey(500)
+            if not found:
+                print('chessboard not found')
+                continue
+
+            img_points.append(corners.reshape(-1, 2))
+            obj_points.append(pattern_points)
+
+            # save img_points for future stereo calibration
+            img_file = shelve.open(os.path.splitext(fn)[0] + ".dat", 'n')
+            img_file['img_points'] = corners.reshape(-1, 2)
+            img_file.close()
+
+            print('ok')
+
+        rms, camera_matrix, dist_coefs, rvecs, tvecs = cv2.calibrateCamera(obj_points,
+                                                                           img_points,
+                                                                           (w, h),
+                                                                           None,
+                                                                           None,
+                                                                           criteria=(
+                                                                           cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER,
+                                                                           120, 0.001),
+                                                                           flags=0)
+
+        # save calibration results
+        camera_file = shelve.open(CAMERA_PATH, 'n')
+        camera_file['camera_matrix'] = camera_matrix
+        camera_file['dist_coefs'] = dist_coefs
+        camera_file.close()
+
+        print("RMS:", rms)
+        print("camera matrix:\n", camera_matrix)
+        print("distortion coefficients: ", dist_coefs.ravel())
+
+    def take_pictures_timed(self, frames_to_capture, time_between=1):
+        logger.error("not implemented")
 
     @staticmethod
     def switch(old_dev, new_dev):

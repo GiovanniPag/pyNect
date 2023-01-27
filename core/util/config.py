@@ -6,6 +6,10 @@ from datetime import date
 from core.util.constants import *
 
 
+def __config_tuple_parse(tuple_string):
+    return tuple(int(i) for i in tuple_string.strip("()").split(","))
+
+
 def __get_log_name():
     return date.today().strftime("%Y_%m_%d.log")
 
@@ -36,8 +40,8 @@ def change_fps(fps) -> bool:
 # load config file
 nect_config = configparser.ConfigParser()
 nect_config.optionxform = str
-nect_config.read(CONFIG_FILE)
-if not nect_config:
+exist = nect_config.read(CONFIG_FILE)
+if not exist:
     nect_config[CONFIG] = {
         LANGUAGE: LANGUAGE_DEFAULT,
         I18N_PATH: I18N_PATH_DEFAULT,
@@ -49,13 +53,30 @@ if not nect_config:
         REFRESH_RATE: REFRESH_RATE_15FPS,
         CALIBRATION_PATH: CALIBRATION_PATH_DEFAULT
     }
-    write_config()
-
+    nect_config[CALIBRATION] = {
+        SQUARE_SIZE: SQUARE_SIZE_DEFAULT,
+        PATTERN_SIZE: PATTERN_SIZE_DEFAULT
+    }
+    nect_config[FRAMES] = {
+        IR_IMAGE_SIZE: IR_IMAGE_SIZE_DEFAULT,
+        RGB_IMAGE_SIZE: RGB_IMAGE_SIZE_DEFAULT,
+        INDEX_FOR_BACKGROUND: INDEX_FOR_BACKGROUND_DEFAULT
+    }
+    nect_config[OPEN_PROJECTS] = {}
 # global logger
 logging.config.fileConfig(fname=Path(nect_config[CONFIG][LOGGER_PATH]), disable_existing_loggers=False,
                           defaults={
                               LOG_FOLDER: str((Path(nect_config[CONFIG][LOG_FOLDER]) / __get_log_name()).resolve())})
 logger = logging.getLogger(nect_config[CONFIG][LOGGER])
+
+IR_IMAGE_SIZE_PARSED = __config_tuple_parse(nect_config[FRAMES][IR_IMAGE_SIZE])
+RGB_IMAGE_SIZE_PARSED = __config_tuple_parse(nect_config[FRAMES][RGB_IMAGE_SIZE])
+RGB_IMAGE_SIZE_HALVED = tuple(x // 2 for x in RGB_IMAGE_SIZE_PARSED)
+PATTERN_SIZE_PARSED = __config_tuple_parse(nect_config[CALIBRATION][PATTERN_SIZE])
+
+
+if not exist:
+    write_config()
 
 operating_system = platform.system()
 

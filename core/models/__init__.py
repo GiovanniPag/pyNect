@@ -1,3 +1,5 @@
+import os
+import shutil
 from configparser import ConfigParser
 
 from core.util import nect_config
@@ -17,15 +19,34 @@ def create_project_folder(path: Path):
         logger.debug("Successfully created the project directories")
 
 
-def create_calibration_folder(serial):
+def remove_calibration_backup(serial):
     calibration_path = Path(nect_config[CONFIG][CALIBRATION_PATH])
+    if (calibration_path / serial).is_dir():
+        shutil.rmtree((calibration_path / (serial + "_backup")))
+
+
+def restore_calibration_backup(serial):
+    calibration_path = Path(nect_config[CONFIG][CALIBRATION_PATH])
+    if (calibration_path / serial).is_dir():
+        shutil.rmtree((calibration_path / serial))
+    if (calibration_path / (serial + "_backup")).is_dir():
+        os.rename((calibration_path / (serial + "_backup")), (calibration_path / serial))
+
+
+def create_calibration_folder(serial, reset=False, backup=False):
+    calibration_path = Path(nect_config[CONFIG][CALIBRATION_PATH])
+    if (calibration_path / (serial + "_backup")).is_dir():
+        shutil.rmtree((calibration_path / (serial + "_backup")))
+    if backup and (calibration_path / serial).is_dir():
+        os.rename((calibration_path / serial), (calibration_path / (serial + "_backup")))
+    elif reset and (calibration_path / serial).is_dir():
+        shutil.rmtree((calibration_path / serial))
     try:
         calibration_path.mkdir(parents=True, exist_ok=True)
         (calibration_path / serial).mkdir(parents=True, exist_ok=True)
         (calibration_path / serial / F_RESULTS).mkdir(parents=True, exist_ok=True)
         (calibration_path / serial / F_RGB).mkdir(parents=True, exist_ok=True)
         (calibration_path / serial / F_IR).mkdir(parents=True, exist_ok=True)
-        (calibration_path / serial / F_Depth).mkdir(parents=True, exist_ok=True)
     except (FileExistsError, FileNotFoundError):
         logger.exception("Creation of the calibration directories failed")
     else:
