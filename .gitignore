@@ -1,5 +1,6 @@
 /var/guide.pdf
 /var/.logs/*
+/var/.calibration/*
 /projects/*
 /examples/
 /var/.conf/pynect.ini
